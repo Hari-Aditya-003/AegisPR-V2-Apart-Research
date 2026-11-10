@@ -15,22 +15,22 @@ beforeEach(() => { mock.get.mockResolvedValue(structuredClone(run)); mock.verify
 it('links findings to proof and verifies the receipt', async () => {
   render(<ReviewDetail id="one" />);
   expect(await screen.findByText('Negative total')).toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button', { name: 'Proof' }));
+  fireEvent.click(screen.getByRole('tab', { name: 'Proof' }));
   expect(screen.getByText('Exact commits')).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: /verify receipt/i }));
   expect(await screen.findByText(/signature valid/i)).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: /download receipt/i }));
   expect(mock.download).toHaveBeenCalled();
-  fireEvent.click(screen.getByRole('button', { name: 'Coverage' }));
+  fireEvent.click(screen.getByRole('tab', { name: 'Coverage' }));
   expect(screen.getByText('target.py')).toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button', { name: 'Models' }));
+  fireEvent.click(screen.getByRole('tab', { name: 'Models' }));
   expect(screen.getByText(/no model calls/i)).toBeInTheDocument();
 });
 it('requests repair only after an explicit action and shows no-write-back provenance', async () => {
   mock.repair.mockResolvedValue({ ...run, repair: { status: 'FIX_VERIFIED', patch: '+fixed', provenance: 'Prewritten manual repair', checks: [], write_back: false } });
   render(<ReviewDetail id="one" />);
   await screen.findByText('Negative total');
-  fireEvent.click(screen.getByRole('button', { name: 'Repair' }));
+  fireEvent.click(screen.getByRole('tab', { name: 'Repair' }));
   expect(mock.repair).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole('button', { name: /verify fixture repair/i }));
   expect(await screen.findByText('Prewritten manual repair')).toBeInTheDocument();
