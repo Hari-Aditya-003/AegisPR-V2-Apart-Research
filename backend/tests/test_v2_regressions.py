@@ -52,6 +52,26 @@ async def test_review_records_actual_context_accelerator(tmp_path, monkeypatch):
     assert any(event['stage'] == 'context' for event in measured['events'])
 
 
+def test_docker_cli_is_resolved_before_sanitizing_the_guest_environment(tmp_path, monkeypatch):
+    import subprocess
+    import shutil
+    from app.v2.execution import FixtureExecutor
+    from app.v2.service import ReviewService
+    case = ReviewService(settings(tmp_path)).cases['py-coupon-floor']
+    monkeypatch.setattr(shutil, 'which', lambda name: '/usr/local/bin/' + name)
+    calls = []
+    def run(command, **kwargs):
+        calls.append(command)
+        if 'run' in command:
+            assert command[0] == '/usr/local/bin/docker'
+            return subprocess.CompletedProcess(command, 0, '{"observations":[0,15]}', '')
+        return subprocess.CompletedProcess(command, 0, '', '')
+    monkeypatch.setattr(subprocess, 'run', run)
+    results = FixtureExecutor(docker_image='python@sha256:' + 'a' * 64).execute(case)
+    assert len(results) == 6
+    assert all(command[0] == '/usr/local/bin/docker' for command in calls)
+
+
 def test_webhook_retry_after_temporary_admission_failure_is_not_lost(tmp_path, monkeypatch):
     app = create_app(settings(tmp_path, github_webhook_secret='webhook-secret', github_installation_ids='42'))
     service = app.state.reviews
