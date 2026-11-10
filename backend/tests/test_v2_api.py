@@ -23,6 +23,7 @@ def test_public_demo_generates_and_verifies_new_receipt(tmp_path):
     assert len(run['executions']) == 6
     receipt = client.get('/api/v2/demo/' + run_id + '/receipt').json()
     assert receipt['payload']['id'] == run_id
+    assert client.get('/api/v2/demo/' + run_id + '/sarif').status_code == 200
     assert client.post('/api/v2/demo', json={'fixture_id': 'py-coupon-floor', 'use_models': True}).status_code == 422
     assert client.get('/api/v2/reviews/' + run_id + '/sarif').status_code == 401
 

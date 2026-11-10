@@ -27,7 +27,7 @@ def probe_code(case, source: str) -> str:
     if case.language == 'node':
         return (source + '\nconst outputs=[];\n' +
                 f'for(const args of {json.dumps(case.arguments)}) {{\n' +
-                "try { outputs.push(evaluate(...args)); } catch(e) { outputs.push('ERROR:'+e.constructor.name); }\n}\n" +
+                "try { outputs.push(await evaluate(...args)); } catch(e) { outputs.push('ERROR:'+e.constructor.name); }\n}\n" +
                 "console.log(JSON.stringify({observations:outputs}));\n" +
                 f'process.exit(JSON.stringify(outputs)===JSON.stringify({json.dumps(case.expected_base)})?0:1);\n')
     return ('import json\n' + source + '\n' +

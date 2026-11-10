@@ -92,6 +92,11 @@ async def test_async_javascript_fixture_is_awaited_before_evaluation(tmp_path):
     assert all(item['status'] == 'pass' for item in completed['executions'] if item['branch'] == 'base')
 
 
+def test_non_ascii_webhook_signature_is_rejected_instead_of_crashing():
+    from app.v2.github_app import verify_webhook
+    assert not verify_webhook(b'{}', 'sha256=é', 'secret')
+
+
 def test_webhook_retry_after_temporary_admission_failure_is_not_lost(tmp_path, monkeypatch):
     app = create_app(settings(tmp_path, github_webhook_secret='webhook-secret', github_installation_ids='42'))
     service = app.state.reviews

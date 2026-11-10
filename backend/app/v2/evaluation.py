@@ -43,6 +43,8 @@ async def run_seeded(service, *, repeats: int = 3) -> dict:
             timings.append(run['duration_ms'])
     report = {'id': str(uuid4()), 'dataset': 'aegispr-seeded-prs-v1',
               'dataset_sha256': hashlib.sha256(service.dataset_path.read_bytes()).hexdigest(),
+              'harness_sha256': hashlib.sha256(b''.join((Path(__file__).parent / name).read_bytes()
+                  for name in ('evaluation.py', 'execution.py', 'service.py', 'evidence.py', 'models.py', 'analysis.py'))).hexdigest(),
               'profile': 'deterministic execution with fixture-authored oracle; no model',
               'repeats': repeats, 'unique_cases': len(service.cases), 'metrics': score_predictions(rows),
               'categories': {key: score_predictions(value) for key, value in grouped.items()},
