@@ -21,6 +21,7 @@ from app.v2.evaluation import run_seeded
 from app.v2.evidence import ReceiptSigner, sarif_report
 from app.v2.github_app import GitHubAppPublisher, allowed_repositories, verify_webhook
 from app.v2.service import ReviewService
+from app.v2.store import DuplicateDelivery
 
 
 class CreateReview(BaseModel):
@@ -77,7 +78,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 return JSONResponse({'detail': 'Enter the owner deployment access code'}, status_code=401)
         if request.method == 'POST':
             # Bound both Content-Length and chunked bodies before JSON/schema parsing.
-            maximum = 1_000_000 if path == '/api/github/webhook' else 65536
+            maximum = 1_000_000 if path in {'/api/github/webhook', '/api/v2/verify-receipt'} else 65536
             data = bytearray()
             async for chunk in request.stream():
                 data.extend(chunk)
@@ -109,11 +110,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             raise HTTPException(404, 'Review was not found')
         return run
 
-    def create(payload, background, *, demo=False):
+    def create(payload, background, *, demo=False, delivery=None):
         try:
-            run = service.create(payload)
+            run = service.create(payload, delivery=delivery)
             run['policy']['public_demo'] = demo
             service.store.save(run)
+        except DuplicateDelivery:
+            raise
         except ValueError as exc:
             raise HTTPException(422, str(exc)) from exc
         background.add_task(service.execute, run['id'])
@@ -234,6 +237,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 run = get(run_id)
                 entries = run['events']
                 start = next((n + 1 for n, event in enumerate(entries) if event['id'] == delivered), 0) if initial else 0
+                if initial:
+                    seen.update(event['id'] for event in entries[:start])
                 initial = False
                 for event in entries[start:]:
                     if event['id'] not in seen:
@@ -273,9 +278,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if not re.fullmatch(r'[A-Za-z0-9-]{1,100}', delivery):
             raise HTTPException(422, 'Invalid delivery identifier')
         try:
-            if not service.store.claim_delivery(delivery, hashlib.sha256(body).hexdigest()):
-                return {'status': 'duplicate'}
             payload = json.loads(body)
+            if not isinstance(payload, dict) or any(not isinstance(payload.get(key, {}), dict) for key in ('repository', 'installation', 'pull_request')):
+                raise ValueError('Invalid webhook envelope')
         except (ValueError, json.JSONDecodeError) as exc:
             raise HTTPException(422, 'Invalid webhook payload or conflicting replay') from exc
         repo = payload.get('repository', {}).get('full_name', '')
@@ -283,10 +288,18 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if (request.headers.get('X-GitHub-Event') != 'pull_request' or
                 payload.get('action') not in {'opened', 'reopened', 'synchronize'} or
                 repo.lower() not in allowed_repositories(settings) or installation not in settings.github_installation_ids.split(',')):
+            if not service.store.claim_delivery(delivery, hashlib.sha256(body).hexdigest()):
+                return {'status': 'duplicate'}
             return {'status': 'ignored'}
         pr = payload.get('pull_request', {})
-        run = create({'mode': 'pr', 'pull_request_url': pr.get('html_url', ''),
-                      'base_sha': pr.get('base', {}).get('sha', ''), 'head_sha': pr.get('head', {}).get('sha', '')}, background_tasks)
+        if not all(isinstance(pr.get(key), dict) for key in ('base', 'head')):
+            raise HTTPException(422, 'Invalid PR commit envelope')
+        try:
+            run = create({'mode': 'pr', 'pull_request_url': pr.get('html_url', ''),
+                          'base_sha': pr['base'].get('sha', ''), 'head_sha': pr['head'].get('sha', '')}, background_tasks,
+                         delivery=(delivery, hashlib.sha256(body).hexdigest()))
+        except DuplicateDelivery:
+            return {'status': 'duplicate'}
         return {'status': 'accepted', 'run_id': run['id'], 'publication': 'owner opt-in only'}
 
     return app

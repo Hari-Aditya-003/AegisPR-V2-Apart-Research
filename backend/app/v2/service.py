@@ -43,7 +43,7 @@ class ReviewService:
         self.executor = (RemoteFixtureExecutor(settings, self.dataset_digest) if settings.v2_worker_url else FixtureExecutor())
         self._repair_locks: dict[str, asyncio.Lock] = {}
 
-    def create(self, payload: dict, *, benchmark=False):
+    def create(self, payload: dict, *, benchmark=False, delivery=None):
         mode = payload.get('mode', 'fixture')
         if mode not in {'fixture', 'pr'}:
             raise ValueError('Unsupported review mode')
@@ -75,7 +75,7 @@ class ReviewService:
         if benchmark:
             self.store.save(run)
         else:
-            self.store.admit(run, daily_limit=self.settings.v2_daily_reviews)
+            self.store.admit(run, daily_limit=self.settings.v2_daily_reviews, delivery=delivery)
         return run
 
     def event(self, run, stage: str, detail: str, *, data=None):

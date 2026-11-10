@@ -53,3 +53,45 @@ it('shows model spending and operator-controlled routing without exposing creden
   expect(screen.getByText('$1.00')).toBeInTheDocument();
   expect(screen.getByText('Consent required')).toBeInTheDocument();
 });
+
+it('filters categories, records owner feedback, and exports scanner evidence', async () => {
+  mock.get.mockResolvedValue({ ...run, policy: { public_demo: false }, incremental: { new: ['F1'], persisting: [], resolved: [] } });
+  mock.feedback.mockResolvedValue({ F1: 'acknowledged' });
+  mock.sarif.mockResolvedValue({ version: '2.1.0' });
+  render(<ReviewDetail id="one" />);
+  await screen.findByText('Negative total');
+  fireEvent.click(screen.getByRole('button', { name: 'Acknowledge' }));
+  expect(await screen.findByText('acknowledged')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Suppress' }));
+  await waitFor(() => expect(mock.feedback).toHaveBeenCalledWith('one', 'F1', 'suppressed'));
+  fireEvent.click(screen.getByRole('button', { name: 'security', exact: true }));
+  expect(screen.getByText(/no findings in this category/i)).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: /export sarif/i }));
+  await waitFor(() => expect(mock.sarif).toHaveBeenCalled());
+});
+
+it('runs and exports measured fixture benchmark results', async () => {
+  const report = { id: 'bench', dataset: 'seeded', dataset_sha256: 'abc', profile: 'Measured synthetic fixtures', repeats: 3, unique_cases: 12,
+    metrics: { cases: 36, precision: 1, recall: .5, f1: .66, abstentions: 3, true_positives: 6, false_positives: 0 }, categories: { boundary: { cases: 6, precision: 1, recall: .5, abstentions: 0 } },
+    median_duration_ms: 5, cost_usd: 0, limitations: ['No external review-quality score'], raw: [{ fixture: 'coupon', repeat: 1, run_id: 'one', status: 'REGRESSION_FOUND' }] };
+  mock.benchmark.mockResolvedValue(report);
+  render(<BenchmarksPanel />);
+  await screen.findByText('No measured runs yet');
+  fireEvent.click(screen.getByRole('button', { name: /run fixture benchmark/i }));
+  expect(await screen.findByText('seeded')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: /download raw report/i }));
+  expect(mock.download).toHaveBeenCalledWith(report, 'aegispr-benchmark.json');
+});
+
+it('retains repair and verification errors visibly', async () => {
+  mock.repair.mockRejectedValue(new Error('Repair unavailable'));
+  mock.verify.mockResolvedValue({ verified: false });
+  render(<ReviewDetail id="one" />);
+  await screen.findByText('Negative total');
+  fireEvent.click(screen.getByRole('tab', { name: 'Repair' }));
+  fireEvent.click(screen.getByRole('button', { name: /verify fixture repair/i }));
+  expect(await screen.findByRole('alert')).toHaveTextContent('Repair unavailable');
+  fireEvent.click(screen.getByRole('tab', { name: 'Proof' }));
+  fireEvent.click(screen.getByRole('button', { name: /verify receipt/i }));
+  expect(await screen.findByText(/signature invalid/i)).toBeInTheDocument();
+});

@@ -7,6 +7,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 
+class DuplicateDelivery(ValueError):
+    """The same webhook has already been atomically admitted."""
+
+
 class ReviewStore:
     def __init__(self, path: Path):
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -30,9 +34,15 @@ class ReviewStore:
             db.execute('INSERT INTO v2_reviews VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload',
                        (run['id'], json.dumps(run, allow_nan=False), run['created_at']))
 
-    def admit(self, run: dict, *, daily_limit: int = 30):
+    def admit(self, run: dict, *, daily_limit: int = 30, delivery: tuple[str, str] | None = None):
         with self.connect() as db:
             db.execute('BEGIN IMMEDIATE')
+            if delivery:
+                previous = db.execute('SELECT digest FROM v2_deliveries WHERE id=?', (delivery[0],)).fetchone()
+                if previous:
+                    if previous[0] != delivery[1]:
+                        raise ValueError('Delivery replay has a different payload')
+                    raise DuplicateDelivery('Webhook delivery was already admitted')
             rows = db.execute('SELECT payload FROM v2_reviews WHERE created >= ?',
                               (datetime.now(timezone.utc).date().isoformat(),)).fetchall()
             runs = [json.loads(row[0]) for row in rows]
@@ -43,6 +53,8 @@ class ReviewStore:
             if len(recent) >= 2:
                 raise ValueError('Two reviews are already active; retry after one completes')
             db.execute('INSERT INTO v2_reviews VALUES(?,?,?)', (run['id'], json.dumps(run), run['created_at']))
+            if delivery:
+                db.execute('INSERT INTO v2_deliveries VALUES(?,?)', delivery)
 
     def get(self, run_id: str) -> dict | None:
         with self.connect() as db:

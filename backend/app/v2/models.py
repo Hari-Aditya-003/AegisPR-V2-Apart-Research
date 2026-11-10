@@ -135,7 +135,11 @@ class ModelGateway:
                         if len(data) > 128000:
                             raise ValueError('Model response exceeded the output limit')
             payload = json.loads(data)
+            if not isinstance(payload, dict):
+                raise ValueError('Model response envelope is not an object')
             usage = payload.get('usage', {})
+            if not isinstance(usage, dict):
+                usage = {}
             try:
                 output = json.loads(payload['choices'][0]['message']['content'])
                 validated = validate_model_output(output, evidence_ids, changed)
