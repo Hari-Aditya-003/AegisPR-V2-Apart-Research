@@ -107,7 +107,7 @@ class ModelGateway:
         )
         user = json.dumps({'evidence_ids': evidence_ids, 'changed_lines': {p: sorted(lines) for p, lines in (changed or {}).items()},
                            'untrusted_context': redact(context)[:12000]}, separators=(',', ':'))
-        fingerprint = hashlib.sha256((name + task + system + user).encode()).hexdigest()
+        fingerprint = hashlib.sha256(('structured-specialist-v2-no-reasoning' + name + task + system + user).encode()).hexdigest()
         cached = self.budget.cached(fingerprint)
         if cached is not None:
             output = validate_model_output(cached, evidence_ids, changed)
@@ -118,13 +118,17 @@ class ModelGateway:
         ticket = self.budget.reserve(run_id, task, name, len(system.encode()) + len(user.encode()) + 2048, 1024)
         started = time.monotonic()
         billed = False
+        request_payload = {'model': spec['model'], 'max_tokens': 1024, 'temperature': 0,
+                           'messages': [{'role': 'system', 'content': system}, {'role': 'user', 'content': user}]}
+        if spec['family'] == 'nemotron':
+            request_payload['reasoning_effort'] = 'none'
+        else:
+            request_payload['response_format'] = {'type': 'json_object'}
         try:
             async with httpx.AsyncClient(timeout=45, follow_redirects=False) as client:
                 async with client.stream('POST', base_url + '/chat/completions',
                                          headers={'Authorization': f'Bearer {key}'},
-                                         json={'model': spec['model'], 'max_tokens': 1024, 'temperature': 0,
-                                               'messages': [{'role': 'system', 'content': system}, {'role': 'user', 'content': user}],
-                                               'response_format': {'type': 'json_object'}}) as response:
+                                         json=request_payload) as response:
                     if response.status_code >= 400:
                         self.budget.fail(ticket, definitely_unbilled=response.status_code in {400, 401, 403, 404, 422, 429})
                         billed = True
