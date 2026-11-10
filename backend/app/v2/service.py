@@ -18,6 +18,7 @@ import httpx
 
 from app.evaluation.seeded_dataset import load_cases, materialize_cases
 from app.github.parser import parse_pull_request_url
+from app.services.context_ranker import ContextDocument, ContextRanker
 from app.v2.analysis import analyze_patch, finding, reconcile_findings
 from app.v2.evidence import ReceiptSigner, adjudicate
 from app.v2.execution import FixtureExecutor, RemoteFixtureExecutor
@@ -36,6 +37,7 @@ class ReviewService:
         self.store = ReviewStore(settings.data_path.with_name('v2-reviews.sqlite3'))
         self.signer = ReceiptSigner(settings.v2_signing_key_path)
         self.gateway = ModelGateway(settings)
+        self.ranker = ContextRanker(settings.gpu_worker_url, settings.gpu_worker_token)
         self.dataset_path = Path(__file__).resolve().parents[3] / 'evals/seeded-prs/cases.json'
         self.cases = {case.id: case for case in load_cases(self.dataset_path)}
         self.dataset_digest = hashlib.sha256(self.dataset_path.read_bytes()).hexdigest()
@@ -120,6 +122,13 @@ class ReviewService:
                 pr = await pinned_pull_request(self.settings, run['pull_request_url'], run['base_sha'], run['head_sha'])
                 run['title'], files = pr['title'], pr['files']
             run['coverage'], run['findings'] = analyze_patch(files)
+            ranking = await self.ranker.rank(run['title'], [
+                ContextDocument(path=item['filename'], content=item.get('patch', '')[:12000], changed=True)
+                for item in files if item.get('patch')
+            ], limit=20)
+            run['context_accelerator'] = ranking.accelerator
+            run['context_order'] = [document.path for document in ranking.documents]
+            self.event(run, 'context', f'Context ranked with {ranking.accelerator}; lexical vectors, not learned code embeddings')
             for coverage, file in zip(run['coverage'], files):
                 run['events'].append({'id': coverage['evidence_id'], 'stage': 'coverage', 'detail': coverage['file'],
                                       'timestamp': now(), 'data': {'patch': file.get('patch', '')}})
@@ -165,7 +174,9 @@ class ReviewService:
             return
         changed = {row['file']: set(row['added_lines']) for row in run['coverage'] if row['state'] == 'analyzed'}
         evidence_ids = [row['evidence_id'] for row in run['coverage']]
-        context = json.dumps({'title': run['title'], 'files': files}, separators=(',', ':'))
+        priority = {path: index for index, path in enumerate(run.get('context_order', []))}
+        ordered = sorted(files, key=lambda item: priority.get(item['filename'], 1000))
+        context = json.dumps({'title': run['title'], 'files': ordered}, separators=(',', ':'))
         categories = list(dict.fromkeys(row['category'] for row in run['coverage'] if row['state'] == 'analyzed'))
         tasks = (categories or ['triage'])[:2] + ['critic']
         for task in tasks:

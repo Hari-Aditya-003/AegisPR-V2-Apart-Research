@@ -1,5 +1,19 @@
 name: aegispr-v2
 services:
+  gpu-worker:
+    build:
+      context: ./gpu-worker
+    image: aegispr-v2-gpu:local
+    environment:
+      GPU_WORKER_TOKEN: ${GPU_WORKER_TOKEN:?GPU_WORKER_TOKEN required}
+    gpus: all
+    mem_limit: 768m
+    cpus: 1
+    read_only: true
+    tmpfs: [/tmp:size=256m,mode=1777]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    restart: unless-stopped
   fixture-worker:
     build:
       context: .
@@ -42,7 +56,7 @@ services:
       V2_ALLOWED_REPOSITORIES: ${V2_ALLOWED_REPOSITORIES:-Hari-Aditya-003/AegisPR-V2-Apart-Research}
       NEBIUS_API_KEY: ${NEBIUS_API_KEY:-}
       VULTR_API_KEY: ${VULTR_API_KEY:-}
-      GPU_WORKER_URL: ${GPU_WORKER_URL:-}
+      GPU_WORKER_URL: http://gpu-worker:8091
       GPU_WORKER_TOKEN: ${GPU_WORKER_TOKEN:-}
       GITHUB_TOKEN: ${GITHUB_TOKEN:-}
       GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET:-}
@@ -54,6 +68,7 @@ services:
     networks: [default, worker]
     depends_on:
       fixture-worker: {condition: service_healthy}
+      gpu-worker: {condition: service_healthy}
     mem_limit: 768m
     cpus: 1
     pids_limit: 128
