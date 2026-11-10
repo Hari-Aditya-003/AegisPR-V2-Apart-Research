@@ -8,13 +8,15 @@ import json
 import os
 from pathlib import Path
 
+import rfc8785
+
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
 
 
 def canonical(value: dict) -> bytes:
-    return json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=False, allow_nan=False).encode()
+    return rfc8785.dumps(value)
 
 
 class ReceiptSigner:
@@ -41,7 +43,7 @@ class ReceiptSigner:
         self.key_id = hashlib.sha256(base64.b64decode(self.public_key)).hexdigest()[:16]
 
     def sign(self, payload: dict) -> dict:
-        protected = {'schema': 'aegispr.evidence.v2', 'key_id': self.key_id, 'payload': payload}
+        protected = {'schema': 'aegispr.evidence.v2', 'canonicalization': 'RFC8785', 'key_id': self.key_id, 'payload': payload}
         data = canonical(protected)
         return {**protected, 'sha256': hashlib.sha256(data).hexdigest(),
                 'signature': base64.b64encode(self._key.sign(data)).decode(), 'public_key': self.public_key,
@@ -56,7 +58,14 @@ class ReceiptSigner:
             if bundle['key_id'] != hashlib.sha256(raw).hexdigest()[:16]:
                 return False
             protected = {key: bundle[key] for key in ('schema', 'key_id', 'payload')}
-            data = canonical(protected)
+            if 'canonicalization' in bundle:
+                if bundle['canonicalization'] != 'RFC8785':
+                    return False
+                protected['canonicalization'] = bundle['canonicalization']
+                data = canonical(protected)
+            else:
+                # Retain offline verification of receipts produced during the initial development checks.
+                data = json.dumps(protected, sort_keys=True, separators=(',', ':'), ensure_ascii=False, allow_nan=False).encode()
             if hashlib.sha256(data).hexdigest() != bundle['sha256']:
                 return False
             Ed25519PublicKey.from_public_bytes(raw).verify(base64.b64decode(bundle['signature'], validate=True), data)
