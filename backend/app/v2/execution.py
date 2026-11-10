@@ -46,6 +46,9 @@ class FixtureExecutor:
         if docker_image and not __import__('re').fullmatch(r'[a-z0-9./_-]+@sha256:[0-9a-f]{64}', docker_image):
             raise ValueError('Worker image must be pinned by sha256 digest')
         self.docker_image = docker_image
+        self.docker = shutil.which('docker') if docker_image else None
+        if docker_image and not self.docker:
+            raise ValueError('Docker CLI is not installed on the fixture worker')
 
     def execute(self, case, *, repair=False) -> list[dict]:
         if case.language not in {'python', 'node'}:
@@ -59,7 +62,7 @@ class FixtureExecutor:
                 with TemporaryDirectory(prefix='aegispr-v2-fixture-') as temporary:
                     environment = {'PATH': os.defpath, 'HOME': temporary, 'LANG': 'C', 'TZ': 'UTC'}
                     if self.docker_image:
-                        command = ['docker', 'run', '--pull=never', '--rm', '--name', container, '--network=none',
+                        command = [self.docker, 'run', '--pull=never', '--rm', '--name', container, '--network=none',
                                    '--read-only', '--cap-drop=ALL', '--security-opt=no-new-privileges', '--user=65534:65534',
                                    '--pids-limit=32', '--memory=128m', '--cpus=0.5', '--ulimit=nofile=64:64',
                                    '--tmpfs=/tmp:rw,noexec,nosuid,size=8m', '--log-driver=none', '-i',
@@ -83,7 +86,7 @@ class FixtureExecutor:
                                 'observations': [], 'stdout': '', 'stderr': 'Fixture executor could not complete'}
                     finally:
                         if self.docker_image:
-                            subprocess.run(['docker', 'rm', '-f', container], capture_output=True, timeout=10, check=False)
+                            subprocess.run([self.docker, 'rm', '-f', container], capture_output=True, timeout=10, check=False)
                 item.update({'duration_ms': int((time.monotonic() - started) * 1000),
                              'executor': 'remote-pinned-container' if self.docker_image else 'local-trusted-fixture',
                              'environment_digest': self.docker_image or 'local-python-' + sys.version.split()[0],

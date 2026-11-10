@@ -10,7 +10,7 @@ services:
     mem_limit: 768m
     cpus: 1
     read_only: true
-    tmpfs: [/tmp:size=256m,mode=1777]
+    tmpfs: ["/tmp:size=256m,mode=1777"]
     security_opt: [no-new-privileges:true]
     cap_drop: [ALL]
     restart: unless-stopped
@@ -34,7 +34,7 @@ services:
     cpus: 1
     pids_limit: 128
     read_only: true
-    tmpfs: [/tmp:size=64m,mode=1777]
+    tmpfs: ["/tmp:size=64m,mode=1777"]
     security_opt: [no-new-privileges:true]
     cap_drop: [ALL]
     restart: unless-stopped
@@ -73,7 +73,7 @@ services:
     cpus: 1
     pids_limit: 128
     read_only: true
-    tmpfs: [/tmp:size=64m,mode=1777]
+    tmpfs: ["/tmp:size=64m,mode=1777"]
     security_opt: [no-new-privileges:true]
     cap_drop: [ALL]
     restart: unless-stopped
@@ -90,7 +90,7 @@ services:
     cpus: 1
     pids_limit: 128
     read_only: true
-    tmpfs: [/tmp:size=64m,mode=1777]
+    tmpfs: ["/tmp:size=64m,mode=1777"]
     security_opt: [no-new-privileges:true]
     cap_drop: [ALL]
     restart: unless-stopped

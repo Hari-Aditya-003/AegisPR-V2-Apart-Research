@@ -43,6 +43,9 @@ async def test_two_provider_families_share_a_ledger_and_cache_validated_outputs(
     assert gateway.budget.summary()['calls'] == 2
     assert gateway.budget.summary()['cache_hits'] == 1
     assert {request.url.host for request in requests} == {'api.tokenfactory.nebius.com', 'api.vultrinference.com'}
+    nebius_request = json.loads(requests[0].content)
+    assert nebius_request['reasoning_effort'] == 'none'
+    assert 'response_format' not in nebius_request
 
 
 @pytest.mark.asyncio

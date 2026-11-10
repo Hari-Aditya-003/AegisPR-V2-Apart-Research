@@ -64,7 +64,7 @@ it('filters categories, records owner feedback, and exports scanner evidence', a
   expect(await screen.findByText('acknowledged')).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Suppress' }));
   await waitFor(() => expect(mock.feedback).toHaveBeenCalledWith('one', 'F1', 'suppressed'));
-  fireEvent.click(screen.getByRole('button', { name: 'security', exact: true }));
+  fireEvent.click(screen.getByRole('button', { name: 'security' }));
   expect(screen.getByText(/no findings in this category/i)).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: /export sarif/i }));
   await waitFor(() => expect(mock.sarif).toHaveBeenCalled());
