@@ -1,4 +1,14 @@
-# AegisPR
+# AegisPR V2 — Apart Research
+
+This is the separate **Apart Research hackathon development repository**, duplicated from [Hari-Aditya-003/AegisPR](https://github.com/Hari-Aditya-003/AegisPR) on **November 10, 2026**. The original repository remains unchanged.
+
+**Prior work disclosure:** All application code, tests, website, documentation, demos, and recorded results inherited at commit [`db06ccc090c6c977968683152635daa14f7056f1`](https://github.com/Hari-Aditya-003/AegisPR/commit/db06ccc090c6c977968683152635daa14f7056f1) are pre-existing AegisPR work. This copy preserves that history. Its initial V2 changes only add this notice and [PRIOR_WORK.md](PRIOR_WORK.md); no new hackathon functionality or research results are claimed. See the [`prior-work-baseline-2026-11-10`](https://github.com/Hari-Aditya-003/AegisPR-V2-Apart-Research/tree/prior-work-baseline-2026-11-10) tag for the unmodified starting point.
+
+**Historical material below:** The original README is retained below this notice. Its Nebius/NVIDIA submission details, dated evidence, website/demo links, and private deployment instructions describe the inherited project; they are not new Apart Research work or a V2 deployment. For this copy, clone `https://github.com/Hari-Aditya-003/AegisPR-V2-Apart-Research.git` and use the `AegisPR-V2-Apart-Research` directory. Keep future V2 changes and evidence recorded separately as described in [PRIOR_WORK.md](PRIOR_WORK.md).
+
+---
+
+# AegisPR (original project documentation)
 
 Don't trust a PR. Prove it.
 
