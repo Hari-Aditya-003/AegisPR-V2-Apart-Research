@@ -34,6 +34,24 @@ class Settings(BaseSettings):
     max_diff_characters: int = 120_000
     workspace_root: Path = Path("/tmp/aegispr-runs")
     data_path: Path = Path("data/aegispr.sqlite3")
+    v2_only: bool = False
+    v2_signing_key_path: Path = Path("data/v2-signing-key.pem")
+    v2_budget_usd: str = "1"
+    v2_run_budget_usd: str = "0.03"
+    v2_max_calls: int = Field(default=3, ge=1, le=5)
+    v2_enable_models: bool = False
+    v2_daily_reviews: int = Field(default=100, ge=1, le=1000)
+    v2_allowed_repositories: str = "Hari-Aditya-003/AegisPR-V2-Apart-Research"
+    v2_worker_url: str | None = None
+    v2_worker_token: str | None = Field(default=None, repr=False)
+    v2_worker_public_key: str | None = None
+    vultr_api_key: str | None = Field(default=None, repr=False)
+    vultr_model: str = "mimo-v2.6-flash"
+    github_webhook_secret: str | None = Field(default=None, repr=False)
+    github_app_id: str | None = None
+    github_app_private_key_path: Path | None = Field(default=None, repr=False)
+    github_installation_ids: str = ""
+    github_publish_enabled: bool = False
 
     @property
     def origins(self) -> list[str]:

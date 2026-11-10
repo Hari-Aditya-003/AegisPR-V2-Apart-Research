@@ -18,6 +18,7 @@ test-results/
 playwright-report/
 artifacts/
 data/*.db
+data/
 data/*.sqlite*
 *.sqlite3
 *.sqlite3-wal
