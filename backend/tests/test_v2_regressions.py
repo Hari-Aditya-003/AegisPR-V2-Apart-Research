@@ -37,6 +37,21 @@ def test_large_valid_receipt_can_be_verified(tmp_path):
     assert response.json()['verified'] is True
 
 
+@pytest.mark.asyncio
+async def test_review_records_actual_context_accelerator(tmp_path, monkeypatch):
+    from app.services.context_ranker import ContextRanker, ContextRanking
+    async def rank(self, query, documents, limit=20):
+        return ContextRanking(documents=documents, accelerator='cuda', device='test-device')
+    monkeypatch.setattr(ContextRanker, 'rank', rank)
+    from app.v2.service import ReviewService
+    service = ReviewService(settings(tmp_path))
+    run = service.create({'mode': 'fixture', 'fixture_id': 'py-coupon-floor'})
+    await service.execute(run['id'])
+    measured = service.store.get(run['id'])
+    assert measured['context_accelerator'] == 'cuda'
+    assert any(event['stage'] == 'context' for event in measured['events'])
+
+
 def test_webhook_retry_after_temporary_admission_failure_is_not_lost(tmp_path, monkeypatch):
     app = create_app(settings(tmp_path, github_webhook_secret='webhook-secret', github_installation_ids='42'))
     service = app.state.reviews
