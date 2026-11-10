@@ -37,6 +37,15 @@ def test_large_valid_receipt_can_be_verified(tmp_path):
     assert response.json()['verified'] is True
 
 
+def test_receipt_survives_browser_json_number_roundtrip(tmp_path):
+    from app.v2.evidence import ReceiptSigner
+    signer = ReceiptSigner(tmp_path / 'key.pem')
+    receipt = signer.sign({'cost': 0.0, 'duration': 1.0, 'small': 1e-7})
+    receipt['payload']['cost'] = 0
+    receipt['payload']['duration'] = 1
+    assert ReceiptSigner.verify(receipt, signer.public_key)
+
+
 @pytest.mark.asyncio
 async def test_review_records_actual_context_accelerator(tmp_path, monkeypatch):
     from app.services.context_ranker import ContextRanker, ContextRanking

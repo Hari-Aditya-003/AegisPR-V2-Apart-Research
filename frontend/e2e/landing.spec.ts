@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 test("paused motion does not hide newly entered evidence panels", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/legacy");
   await page.getByRole("button", { name: /Pause animation$/ }).click();
   const logo = page.getByAltText("AegisPR shield and branching circuit logo");
   expect(await logo.evaluate(node => getComputedStyle(node).animationName)).toBe("none");
@@ -30,7 +30,7 @@ test("private evidence retries after a session access code without exposing it i
 });
 
 test("visitor can explore example outcomes and test code with the keyboard", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/legacy");
   await expect(page.getByText("Interactive example · not a live review")).toBeVisible();
   const safeChange = page.getByRole("button", { name: "Safe change", exact: true });
   await safeChange.focus();
@@ -48,7 +48,7 @@ test("visitor can explore example outcomes and test code with the keyboard", asy
 test("branded mobile page fits the viewport and respects reduced motion", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.goto("/");
+  await page.goto("/legacy");
   const logo = page.getByAltText("AegisPR shield and branching circuit logo");
   await expect(logo).toBeVisible();
   expect(await logo.evaluate((node) => (node as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
@@ -82,7 +82,7 @@ test("visitor can understand and start the verification flow", async ({ page }) 
       }),
     });
   });
-  await page.goto("/");
+  await page.goto("/legacy");
   await expect(page.getByRole("heading", { name: /don't trust a pr/i })).toBeVisible();
   await page.getByLabel(/github pull request/i).fill("https://github.com/acme/store/pull/42");
   await page.getByRole("button", { name: /verify pr/i }).click();
@@ -93,7 +93,7 @@ test("visitor can understand and start the verification flow", async ({ page }) 
 
 
 test("visitor receives validation feedback for a non-GitHub URL", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/legacy");
   await page.getByLabel(/github pull request/i).fill("https://example.com/pull/42");
   await page.getByRole("button", { name: /verify pr/i }).click();
   await expect(page.locator("#pr-error")).toContainText("public GitHub pull request");
