@@ -81,6 +81,17 @@ def test_docker_cli_is_resolved_before_sanitizing_the_guest_environment(tmp_path
     assert all(command[0] == '/usr/local/bin/docker' for command in calls)
 
 
+@pytest.mark.asyncio
+async def test_async_javascript_fixture_is_awaited_before_evaluation(tmp_path):
+    from app.v2.service import ReviewService
+    service = ReviewService(settings(tmp_path))
+    run = service.create({'mode': 'fixture', 'fixture_id': 'js-async-race'})
+    await service.execute(run['id'])
+    completed = service.store.get(run['id'])
+    assert completed['status'] == 'REGRESSION_FOUND'
+    assert all(item['status'] == 'pass' for item in completed['executions'] if item['branch'] == 'base')
+
+
 def test_webhook_retry_after_temporary_admission_failure_is_not_lost(tmp_path, monkeypatch):
     app = create_app(settings(tmp_path, github_webhook_secret='webhook-secret', github_installation_ids='42'))
     service = app.state.reviews
