@@ -49,4 +49,3 @@ def test_webhook_requires_signature_and_deduplicates(tmp_path):
 def test_request_size_is_bounded(tmp_path):
     client = TestClient(make_app(tmp_path))
     assert client.post('/api/v2/demo', content=b'x' * 70000).status_code == 413
-

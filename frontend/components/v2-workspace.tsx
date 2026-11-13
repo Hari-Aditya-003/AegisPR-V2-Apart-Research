@@ -7,7 +7,7 @@ import { createReview, getModelConfig, getV2Health, listFixtures, listReviews, s
 import { accessChangedEvent } from '@/lib/api';
 import type { Fixture, ModelConfig, Review, V2Health } from '@/lib/v2-types';
 
-export const money = (amount: number) => '$' + amount.toFixed(2);
+export const money = (amount: number) => '$' + amount.toFixed(amount > 0 && amount < .01 ? 6 : 2);
 export const label = (text: string) => text.replaceAll('_', ' ').toLowerCase();
 
 export function Workspace({ children }: { children: React.ReactNode }) {
@@ -70,9 +70,9 @@ export function ReviewDashboard() {
   const reproduced = reviews.filter(run => run.status === 'REGRESSION_FOUND').length;
   return <Workspace><div className="v2-page-heading"><div><p className="v2-overline">AEGISPR / REVIEW WORKSPACE</p><h1>Reviews with evidence.</h1><p>Inspect changes. Reproduce behavior. Keep uncertainty visible.</p></div>
     <button className="v2-button secondary" onClick={() => setForm(!form)}>Review a pull request <span aria-hidden="true">↗</span></button></div>
-    <div className="v2-metrics"><article><span>RECORDED REVIEWS</span><strong>{loading ? '—' : reviews.length}</strong><small>From this deployment</small></article>
+    <div className="v2-metrics"><article><span>RECENT REVIEWS</span><strong>{loading ? '—' : reviews.length}</strong><small>Latest up to 30 records</small></article>
       <article><span>REPRODUCED REGRESSIONS</span><strong>{loading ? '—' : reproduced}</strong><small>Within executed scope</small></article>
-      <article><span>ACCOUNTED MODEL COST</span><strong>{config ? money(config.budget.accounted_cost_usd) : '—'}</strong><small>App ledger · conservative estimate</small></article>
+      <article className="v2-cost-metric"><span>ACCOUNTED MODEL COST</span><strong>{config ? money(config.budget.accounted_cost_usd) : '—'}</strong><small>App ledger · conservative estimate</small></article>
       <article><span>DEVELOPMENT LIMIT</span><strong>{config ? money(config.budget.limit_usd) : '—'}</strong><small>{config ? `${money(config.budget.per_run_usd)} per review` : 'Owner access to view limits'}</small></article></div>
     {form && <form className="v2-panel v2-pr-form" onSubmit={submit}><div className="v2-panel-heading"><h2>Review pinned changes</h2><span className="v2-badge">Owner access</span></div>
       <p>Allowlisted public repositories only. Source review runs first; arbitrary installs and tests are disabled.</p>

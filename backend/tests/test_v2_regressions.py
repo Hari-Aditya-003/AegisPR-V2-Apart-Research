@@ -117,4 +117,3 @@ def test_webhook_retry_after_temporary_admission_failure_is_not_lost(tmp_path, m
     assert response.json()['status'] == 'accepted'
     assert client.post('/api/github/webhook', content=body, headers=headers).json()['status'] == 'duplicate'
     assert execute.await_count == 1
-

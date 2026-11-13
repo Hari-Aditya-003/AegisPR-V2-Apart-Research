@@ -29,7 +29,7 @@ export async function getReview(id: string): Promise<Review> {
 export const repairReview = (run: Review) => v2Request<Review>(`/api/v2/${run.policy.public_demo ? 'demo' : 'reviews'}/${encodeURIComponent(run.id)}/repair`, {});
 export const saveFeedback = (id: string, finding_id: string, state: string) => v2Request<Record<string, string>>(`/api/v2/reviews/${encodeURIComponent(id)}/feedback`, { finding_id, state });
 export const verifyReceipt = (receipt: Receipt) => v2Request<{ verified: boolean; key_id: string }>('/api/v2/verify-receipt', receipt);
-export const getSarif = (id: string) => v2Request<Record<string, unknown>>(`/api/v2/reviews/${encodeURIComponent(id)}/sarif`);
+export const getSarif = (id: string, publicDemo = false) => v2Request<Record<string, unknown>>(`/api/v2/${publicDemo ? 'demo' : 'reviews'}/${encodeURIComponent(id)}/sarif`);
 export const listBenchmarks = () => v2Request<BenchmarkReport[]>('/api/v2/benchmarks');
 export const runBenchmark = () => v2Request<BenchmarkReport>('/api/v2/models/evaluate', { repeats: 3 });
 

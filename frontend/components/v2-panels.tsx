@@ -37,7 +37,7 @@ export function ReviewDetail({ id }: { id: string }) {
     if (!run) return;
     try { setRun({ ...run, feedback: await saveFeedback(id, findingId, state) }); } catch (cause) { setError(errorText(cause)); }
   }
-  async function sarif() { try { downloadJson(await getSarif(id), `aegispr-${id}.sarif`); } catch (cause) { setError(errorText(cause)); } }
+  async function sarif() { try { downloadJson(await getSarif(id, Boolean(run?.policy.public_demo)), `aegispr-${id}.sarif`); } catch (cause) { setError(errorText(cause)); } }
   return <Workspace><Link className="v2-back" href="/">← All reviews</Link>
     {error && <p className="v2-error" role="alert">{error}<button className="v2-text-button" onClick={() => void load()}>Retry</button></p>}
     {!run ? <p className="v2-empty">Loading evidence…</p> : <><div className="v2-page-heading"><div><p className="v2-overline">{run.mode === 'fixture' ? 'CONTROLLED FIXTURE / NEW EXECUTION' : 'PINNED PULL REQUEST'}</p><h1>{run.title}</h1><p>Review <code>{id.slice(0, 8)}</code> · {run.duration_ms} ms · {money(run.cost.accounted_cost_usd)} model cost</p></div><Status value={run.status} /></div>

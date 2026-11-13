@@ -161,6 +161,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             raise HTTPException(409, 'Evidence is still being collected')
         return run['receipt']
 
+    @app.get('/api/v2/demo/{run_id}/sarif')
+    def demo_sarif(run_id: str):
+        return sarif_report(get(run_id, demo=True))
+
     @app.post('/api/v2/demo/{run_id}/repair')
     async def demo_repair(run_id: str):
         get(run_id, demo=True)

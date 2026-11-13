@@ -158,4 +158,3 @@ def test_benchmark_scores_do_not_count_abstention_as_a_negative():
     assert report['precision'] == 0.5
     assert report['recall'] == 0.5
     assert report['abstentions'] == 1 and report['cases'] == 4
-

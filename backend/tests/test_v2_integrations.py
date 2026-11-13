@@ -172,4 +172,3 @@ def test_github_publishing_is_off_without_explicit_owner_configuration(tmp_path)
         publisher.jwt()
     with pytest.raises(ValueError, match='disabled'):
         __import__('asyncio').run(publisher.publish({}, '42'))
-

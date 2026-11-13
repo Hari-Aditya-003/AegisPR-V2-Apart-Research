@@ -60,6 +60,14 @@ python -m app.v2.evaluation --repeats 3 --output ../artifacts/fixture-benchmark.
 
 These measurements test orchestration against fixture-authored oracles. They are not independent review accuracy, real-PR coverage, model comparison, repair generalization, or a ReviewBench score. `validate_external_manifest` checks pinned external PR manifests but does not download or execute those repositories.
 
+### Recorded checks
+
+The November 13 Dell run produced 36 signed reviews from 12 committed fixtures. Each review ran three base and three head checks in the pinned worker images, for 216 executions. The harness detected 24 seeded regressions, recorded three unchanged results, and abstained on nine intentional changes. It used zero model calls. The [fixture summary](../evals/results/2026-11-13-dell-fixture-summary.json) also preserves the earlier JavaScript harness false negative and identifies the corrected harness by digest.
+
+The [ReviewBench intake check](../evals/results/2026-11-13-reviewbench-intake.json) used five small cases from the pinned public test manifest. Four passed exact-commit ingestion and static coverage, and one was skipped after its PR commits diverged from the manifest. This was a read-only compatibility check without runtime execution, model calls, or official ReviewBench scoring.
+
+The two live provider checks returned schema-valid responses from Nemotron Lightning and MiMo Flash. One preceding Nebius response exhausted its output allowance before producing valid JSON. All three calls accounted for $0.000288 against the $1 development cap.
+
 ## Roadmap acceptance status
 
 | Roadmap area | Current result | Remaining acceptance work |

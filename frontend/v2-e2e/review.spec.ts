@@ -18,7 +18,11 @@ test('fresh remote fixture, signed proof, tamper detection and explicit repair',
   await expect(page.locator('.v2-executions details')).toHaveCount(6);
   await page.getByRole('button', { name: 'Verify receipt', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('Signature valid');
-  if (process.env.AEGISPR_SCREENSHOT_DIR) await page.screenshot({ path: join(process.env.AEGISPR_SCREENSHOT_DIR, 'AegisPR-V2-Proof.png'), fullPage: true });
+  if (process.env.AEGISPR_SCREENSHOT_DIR) await page.screenshot({
+    path: join(process.env.AEGISPR_SCREENSHOT_DIR, 'AegisPR-V2-Proof.png'),
+    fullPage: true,
+    style: '.site-header { position: static !important; } .skip-link { visibility: hidden !important; }',
+  });
   const id = page.url().split('/').pop();
   const receiptResponse = await request.get(`http://127.0.0.1:8200/api/v2/demo/${id}/receipt`);
   const receipt = await receiptResponse.json(); receipt.payload.title = 'modified evidence';
@@ -35,6 +39,7 @@ test('mobile workspace fits, provides navigation and opens bounded model setting
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
   await expect(page.getByRole('button', { name: /run safe example/i })).toBeVisible();
+  await expect(page.getByText('$1.00', { exact: true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   if (process.env.AEGISPR_SCREENSHOT_DIR) await page.screenshot({ path: join(process.env.AEGISPR_SCREENSHOT_DIR, 'AegisPR-V2-Mobile.png'), fullPage: true });
   await page.getByRole('navigation', { name: 'Workspace navigation' }).getByRole('link', { name: 'Models & limits' }).click();
