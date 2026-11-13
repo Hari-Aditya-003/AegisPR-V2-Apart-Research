@@ -11,7 +11,7 @@ export function saveAccessCode(code: string) {
   window.dispatchEvent(new Event(accessChangedEvent));
 }
 
-function requestHeaders(json = false): Record<string, string> {
+export function requestHeaders(json = false): Record<string, string> {
   const headers: Record<string, string> = json ? { "Content-Type": "application/json" } : {};
   const code = typeof window === "undefined" ? null : sessionStorage.getItem(accessKey);
   if (code) headers.Authorization = `Bearer ${code}`;

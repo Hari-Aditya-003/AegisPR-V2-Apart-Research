@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+!.env.v2.example
 __pycache__/
 .pytest_cache/
 .coverage
@@ -18,6 +19,7 @@ test-results/
 playwright-report/
 artifacts/
 data/*.db
+data/
 data/*.sqlite*
 *.sqlite3
 *.sqlite3-wal

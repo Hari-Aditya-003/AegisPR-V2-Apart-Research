@@ -6,8 +6,8 @@ import "./globals.css";
 
 
 export const metadata: Metadata = {
-  title: "AegisPR — Evidence-backed pull request verification",
-  description: "Autonomous differential verification powered by NVIDIA Nemotron on Nebius Token Factory.",
+  title: "AegisPR V2 — Reviews with evidence",
+  description: "Commit-pinned review, repeated execution, signed evidence and bounded model specialists.",
   icons: { icon: "/brand/aegispr-logo.jpg", apple: "/brand/aegispr-logo.jpg" },
 };
 
@@ -20,21 +20,22 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <Link className="brand" href="/" aria-label="AegisPR home">
             <span className="brand-shield" aria-hidden="true" />
             <span>Aegis<span className="brand-light">PR</span></span>
+            <span className="v2-brand-tag">V2</span>
           </Link>
           <nav aria-label="Primary navigation">
-            <a href="/#how-it-works">How it works</a>
-            <a href="/#features">Features</a>
-            <a href="/#architecture">Architecture</a>
-            <a href="https://github.com/Hari-Aditya-003/AegisPR" rel="noreferrer">GitHub</a>
+            <Link href="/">Reviews</Link>
+            <Link href="/benchmarks">Benchmarks</Link>
+            <Link href="/settings">Models & limits</Link>
+            <a href="https://github.com/Hari-Aditya-003/AegisPR-V2-Apart-Research" rel="noreferrer">GitHub ↗</a>
           </nav>
-          <a className="header-action" href="/#verify-title">Start verification <span aria-hidden="true">↗</span></a>
+          <span className="v2-header-context">Apart Research workspace</span>
         </header>
         <DeploymentControls />
         <main id="main-content">{children}</main>
         <footer>
           <span>AegisPR</span>
           <p>Don&apos;t trust a PR. Prove it.</p>
-          <p>Built for the Nebius × NVIDIA Global AI Hackathon.</p>
+          <p>V2 · Apart Research development · Prior work disclosed</p>
         </footer>
       </body>
     </html>

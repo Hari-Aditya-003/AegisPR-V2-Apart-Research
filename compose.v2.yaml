@@ -1,0 +1,102 @@
+name: aegispr-v2
+services:
+  gpu-worker:
+    build:
+      context: ./gpu-worker
+    image: aegispr-v2-gpu:local
+    environment:
+      GPU_WORKER_TOKEN: ${GPU_WORKER_TOKEN:?GPU_WORKER_TOKEN required}
+    gpus: all
+    mem_limit: 768m
+    cpus: 1
+    read_only: true
+    tmpfs: ["/tmp:size=256m,mode=1777"]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    restart: unless-stopped
+  fixture-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.v2
+    image: aegispr-v2-backend:local
+    command: [uvicorn, app.v2.worker:app, --host, 0.0.0.0, --port, "8000"]
+    environment:
+      V2_WORKER_TOKEN: ${V2_WORKER_TOKEN:?V2_WORKER_TOKEN required}
+      V2_WORKER_SIGNING_KEY: /srv/worker-data/signing-key.pem
+      V2_FIXTURE_IMAGE: python@sha256:2c941e860699f878900b0edc2403613c234d4b32eda3cc9fa7036991a2a63c4a
+      V2_NODE_FIXTURE_IMAGE: node@sha256:c3de60bf2f9dd0ac6370e6117950ff62d6e339527e7472301c9c78a017978392
+    group_add: ["${DOCKER_GID:-999}"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - v2-worker-data:/srv/worker-data
+    networks: [worker]
+    mem_limit: 512m
+    cpus: 1
+    pids_limit: 128
+    read_only: true
+    tmpfs: ["/tmp:size=64m,mode=1777"]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    restart: unless-stopped
+  api:
+    image: aegispr-v2-backend:local
+    environment:
+      APP_ENV: production
+      API_ACCESS_TOKEN: ${API_ACCESS_TOKEN:?API_ACCESS_TOKEN required}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3200,http://127.0.0.1:3200}
+      DATA_PATH: /srv/backend/data/aegispr.sqlite3
+      V2_SIGNING_KEY_PATH: /srv/backend/data/v2-signing-key.pem
+      V2_WORKER_URL: http://fixture-worker:8000
+      V2_WORKER_TOKEN: ${V2_WORKER_TOKEN:?V2_WORKER_TOKEN required}
+      V2_WORKER_PUBLIC_KEY: ${V2_WORKER_PUBLIC_KEY:?V2_WORKER_PUBLIC_KEY required}
+      V2_ENABLE_MODELS: ${V2_ENABLE_MODELS:-false}
+      V2_BUDGET_USD: ${V2_BUDGET_USD:-1}
+      V2_RUN_BUDGET_USD: ${V2_RUN_BUDGET_USD:-0.03}
+      V2_MAX_CALLS: ${V2_MAX_CALLS:-3}
+      V2_ALLOWED_REPOSITORIES: ${V2_ALLOWED_REPOSITORIES:-Hari-Aditya-003/AegisPR-V2-Apart-Research}
+      NEBIUS_API_KEY: ${NEBIUS_API_KEY:-}
+      VULTR_API_KEY: ${VULTR_API_KEY:-}
+      GPU_WORKER_URL: http://gpu-worker:8091
+      GPU_WORKER_TOKEN: ${GPU_WORKER_TOKEN:-}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET:-}
+      GITHUB_APP_ID: ${GITHUB_APP_ID:-}
+      GITHUB_INSTALLATION_IDS: ${GITHUB_INSTALLATION_IDS:-}
+      GITHUB_PUBLISH_ENABLED: "false"
+    ports: ["127.0.0.1:8200:8000"]
+    volumes: [v2-api-data:/srv/backend/data]
+    networks: [default, worker]
+    depends_on:
+      fixture-worker: {condition: service_healthy}
+      gpu-worker: {condition: service_healthy}
+    mem_limit: 768m
+    cpus: 1
+    pids_limit: 128
+    read_only: true
+    tmpfs: ["/tmp:size=64m,mode=1777"]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    restart: unless-stopped
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:8200}
+    image: aegispr-v2-frontend:local
+    ports: ["127.0.0.1:3200:3000"]
+    depends_on:
+      api: {condition: service_healthy}
+    mem_limit: 512m
+    cpus: 1
+    pids_limit: 128
+    read_only: true
+    tmpfs: ["/tmp:size=64m,mode=1777"]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    restart: unless-stopped
+volumes:
+  v2-worker-data:
+  v2-api-data:
+networks:
+  worker:
+    internal: true
