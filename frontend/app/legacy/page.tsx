@@ -1,11 +1,14 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { VerificationForm } from "@/components/verification-form";
 import { VerificationPreview } from "@/components/verification-preview";
 import { createVerification } from "@/lib/api";
 
+
+const publicWorkspace = process.env.NEXT_PUBLIC_API_URL === "";
 
 const features = [
   ["Change intelligence", "Maps the pull request, changed functions, tests, and dependency neighborhood before reasoning."],
@@ -28,7 +31,18 @@ export default function HomePage() {
     <>
       <section className="hero">
         <div className="hero-glow" aria-hidden="true" />
-        <VerificationForm onSubmit={startVerification} />
+        {publicWorkspace ? (
+          <div className="verify-panel">
+            <p className="eyebrow">Original AegisPR interface</p>
+            <h1>Don&apos;t trust a PR. <span>Prove it.</span></h1>
+            <p className="hero-copy">V1 introduced generated tests, base and head execution, and repair verification. The interactive example shows how V1 presented the results.</p>
+            <div className="unified-actions">
+              <Link className="v2-button" href="/#run-fixture">Run a live fixture</Link>
+              <Link className="v2-button secondary" href="/#compare-versions">Compare V1 and V2</Link>
+            </div>
+            <p className="field-hint">Generated-test execution is available through a trusted private installation. <Link href="/guide">See setup options.</Link></p>
+          </div>
+        ) : <VerificationForm onSubmit={startVerification} />}
         <VerificationPreview />
       </section>
 
@@ -71,7 +85,7 @@ export default function HomePage() {
       </section>
 
       <section className="section use-section">
-        <div><p className="eyebrow">How to use AegisPR</p><h2>Paste one URL. Inspect every claim.</h2></div>
+        <div><p className="eyebrow">V1 private verification workflow</p><h2>Paste one URL. Inspect every claim.</h2></div>
         <ol>
           <li><span>1</span><p><strong>Open a public GitHub pull request.</strong> Copy its canonical URL.</p></li>
           <li><span>2</span><p><strong>Start verification.</strong> Watch repository, impact, model, and sandbox stages live.</p></li>

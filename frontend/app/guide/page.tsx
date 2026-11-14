@@ -11,7 +11,7 @@ export default function GettingStarted() {
         <li>Open Proof to see the checks and verify or download the signed receipt.</li>
         <li>Open Repair to verify the prewritten fixture patch. Open Resource usage to see where the work ran.</li>
       </ol>
-      <Link href="/">Open reviews ↗</Link>
+      <Link href="/#workspace">Open reviews ↗</Link>
     </section>
     <section className="v2-panel">
       <h2>Review an allowlisted pull request</h2>

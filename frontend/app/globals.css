@@ -492,3 +492,23 @@ html[data-motion=paused] *, html[data-motion=paused] *::before, html[data-motion
 .v2-guide { width: min(58rem, calc(100% - 2.5rem)); margin: 3rem auto; }
 .v2-guide .v2-panel { margin-bottom: 1.3rem; }
 .v2-guide ol { padding-inline-start: 1.25rem; line-height: 1.8; }
+
+.unified-hero { min-height: min(720px, 92vh); }
+.unified-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin-block: 1.5rem 1rem; }
+.unified-actions a:focus-visible, .mobile-review-link:focus-visible { outline: 2px solid var(--cyan); outline-offset: 4px; }
+.version-comparison, .unified-workspace, #run-fixture { scroll-margin-top: 92px; }
+.version-comparison .section-heading p { color: var(--muted); }
+.version-table { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.version-table table { width: 100%; table-layout: fixed; border-collapse: collapse; text-align: left; font-size: .95rem; line-height: 1.5; }
+.version-table :is(th, td) { padding: 1rem 1.3rem; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; vertical-align: top; }
+.version-table thead th { color: var(--lime); }
+.version-table tr > :first-child { width: 22%; font-weight: 650; }
+.version-table tbody td { color: #b0c8c5; }
+.version-table tbody tr:last-child > * { border-bottom: 0; }
+.mobile-review-link { display: none; }
+@media (max-width: 760px) {
+  .mobile-review-link { display: inline; font-size: .9rem; color: var(--lime); }
+  .version-table table { font-size: .78rem; }
+  .version-table :is(th, td) { padding: .7rem .5rem; }
+  .version-table tr > :first-child { width: 25%; }
+}

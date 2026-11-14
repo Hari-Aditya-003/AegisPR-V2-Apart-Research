@@ -4,7 +4,7 @@ This is the separate **Apart Research hackathon development repository**, duplic
 
 ## Try AegisPR online
 
-[Open the AegisPR workspace](https://aegispr-v2.snap-hub.workers.dev). Start with the coupon fixture, then open **Proof** for the six checks and signed evidence. Use **Repair** to verify the prewritten fixture patch and **Resource usage** to inspect the runtime. The public fixture path requires no credentials or model credits.
+[Open the AegisPR workspace](https://aegispr-v2.snap-hub.workers.dev). The homepage uses the original V1 interface and includes the V2 tools in one workspace. Select **Compare V1 and V2** for a side-by-side guide or **Try a live fixture** to start the coupon check. Then open **Proof** for the six checks and signed evidence. Use **Repair** to verify the prewritten fixture patch and **Resource usage** to inspect the runtime. The public fixture path requires no credentials or model credits.
 
 | Workflow | Access |
 | --- | --- |
