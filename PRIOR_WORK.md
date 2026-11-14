@@ -29,7 +29,7 @@ The repository setup changes only:
 - Add the V2 title and prior-work disclosure at the top of `README.md` while retaining the original README content below it.
 - Add this provenance document and mark the unchanged source commit with the baseline tag.
 
-Application source, tests, license, configuration, and deployment files are unchanged from the baseline. No new functional capability, research experiment, or hackathon result has been added during this duplication task. Existing evidence has not been rerun or revalidated by copying the repository.
+At the initial duplication checkpoint, application source, tests, license, configuration, and deployment files were unchanged from the baseline. Existing evidence was not rerun or revalidated by copying the repository. Subsequent V2 development is identified below.
 
 ## Recording future V2 work
 
@@ -38,6 +38,9 @@ Record each new contribution below with its commit or pull request, date, change
 | Date | Contribution | Evidence | Classification |
 | --- | --- | --- | --- |
 | November 10, 2026 | Separate repository and prior-work documentation | Initial V2 documentation commit; baseline tag above | Repository setup only; no new functionality or research results |
+| November 11, 2026 | V2 API, evidence contracts, signed receipts, bounded provider adapters, static coverage, curated remote worker, fixture evaluation, GitHub adapter, new UI and separate deployment | V2 source under `backend/app/v2`, new frontend workspace and tests; [release scope](docs/v2-release.md) | New implementation/integration work; fixture measurements and connectivity checks only, no independent real-PR accuracy claim |
+
+The differential execution concept, seeded source pairs, original model/test/repair workflow, CUDA ranker, V1 API, and original UI were inherited. V2 integrates or extends those pieces; it does not claim to have invented them during the event. The V2.0–V3.0 document is a roadmap, and unfulfilled gates are explicitly listed in the release scope.
 
 To inspect changes after the baseline:
 

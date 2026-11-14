@@ -1,0 +1,8 @@
+name = "aegispr-v2"
+main = "edge.mjs"
+compatibility_date = "2026-11-14"
+workers_dev = true
+preview_urls = false
+
+[observability]
+enabled = false

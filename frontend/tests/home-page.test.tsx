@@ -7,7 +7,7 @@ const create = vi.fn().mockResolvedValue({ id: "run-42" });
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
 vi.mock("../lib/api", () => ({ createVerification: (...args: unknown[]) => create(...args) }));
 
-import HomePage from "../app/page";
+import HomePage from "../app/legacy/page";
 
 
 describe("HomePage", () => {

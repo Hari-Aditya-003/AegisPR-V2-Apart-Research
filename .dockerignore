@@ -1,0 +1,16 @@
+.git
+.env
+.env.*
+**/.env
+**/.env.*
+**/.venv
+**/.venv312
+**/node_modules
+**/.next
+**/__pycache__
+**/data
+**/artifacts
+**/coverage
+**/.coverage
+**/test-results
+work

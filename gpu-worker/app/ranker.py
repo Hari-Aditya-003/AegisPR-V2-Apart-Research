@@ -22,6 +22,8 @@ class RankingResult(BaseModel):
     documents: list[Document] = Field(default_factory=list)
     accelerator: str
     device: str | None = None
+    vram_used_bytes: int | None = None
+    vram_total_bytes: int | None = None
 
 
 class HashingRanker:
@@ -53,7 +55,16 @@ class HashingRanker:
             for index, document in enumerate(documents)
         ]
         ranked.sort(key=lambda item: (-item.score, item.path))
+        used = total = None
+        if self.accelerator == "cuda":
+            try:
+                free, total = self.xp.cuda.runtime.memGetInfo()
+                used = total - free
+            except self.xp.cuda.runtime.CUDARuntimeError:
+                pass
         return RankingResult(
+            vram_used_bytes=used,
+            vram_total_bytes=total,
             documents=ranked[: max(1, min(limit, len(ranked)))],
             accelerator=self.accelerator,
             device=self.device,
