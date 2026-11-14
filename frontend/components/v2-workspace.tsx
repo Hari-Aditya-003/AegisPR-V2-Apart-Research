@@ -14,8 +14,8 @@ export const label = (text: string) => text.replaceAll('_', ' ').toLowerCase();
 export function Workspace({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   return <div className="v2-layout"><aside className="v2-sidebar"><p className="v2-overline">WORKSPACE</p>
-    <nav aria-label="Workspace navigation">{[['/', '◈', 'Reviews'], ['/benchmarks', '▥', 'Benchmarks'], ['/settings', '⚙', 'Models & limits'], ['/guide', '↗', 'Getting started']].map(([href, icon, name]) =>
-      <Link key={href} href={href} className={path === href || href === '/' && path?.startsWith('/reviews') ? 'selected' : ''}><span aria-hidden="true">{icon}</span>{name}</Link>)}</nav>
+    <nav aria-label="Workspace navigation">{[['/#workspace', '◈', 'Reviews'], ['/benchmarks', '▥', 'Benchmarks'], ['/settings', '⚙', 'Models & limits'], ['/guide', '↗', 'Getting started']].map(([href, icon, name]) =>
+      <Link key={href} href={href} className={path === href || href === '/#workspace' && (path === '/' || path?.startsWith('/reviews')) ? 'selected' : ''}><span aria-hidden="true">{icon}</span>{name}</Link>)}</nav>
     <div className="v2-sidebar-bottom"><span className="v2-status-dot" />Evidence first<p>Models propose.<br />Executed checks establish proof.</p>
       <a href="https://github.com/Hari-Aditya-003/AegisPR-V2-Apart-Research/blob/main/PRIOR_WORK.md" target="_blank" rel="noreferrer">Prior work & provenance ↗</a></div>
   </aside><div className="v2-content">{children}</div></div>;
@@ -88,7 +88,7 @@ export function ReviewDashboard() {
       {useModels && <label className="v2-checkbox"><input type="checkbox" required checked={consent} onChange={event => setConsent(event.target.checked)} />Send this public source to the configured Nebius and Vultr models for this review</label>}
       <button className="v2-button" disabled={busy}>Start pinned review</button></form>}
     {error && <p className="v2-error" role="alert">{error}</p>}
-    <div className="v2-overview-grid"><section className="v2-panel v2-demo-panel"><div className="v2-panel-heading"><span className="v2-overline">LIVE SAFE EXAMPLE</span><span className="v2-badge green">No tokens required</span></div>
+    <div className="v2-overview-grid"><section id="run-fixture" className="v2-panel v2-demo-panel"><div className="v2-panel-heading"><span className="v2-overline">LIVE SAFE EXAMPLE</span><span className="v2-badge green">No tokens required</span></div>
       <h2>Run it. Then inspect the proof.</h2><p>A committed fixture runs on base and head three times each. The output, exact commits, and signed receipt are produced for your new run.</p>
       <label className="v2-overline" htmlFor="safe-fixture">CHOOSE A FIXTURE</label><select id="safe-fixture" value={fixture} onChange={event => setFixture(event.target.value)}>
         {fixtures.length ? fixtures.map(item => <option key={item.id} value={item.id}>{item.title} · {item.language}</option>) : <option value="py-coupon-floor">Coupon boundary · Python</option>}</select>

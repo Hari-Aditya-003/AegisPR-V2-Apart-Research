@@ -6,7 +6,7 @@ import "./globals.css";
 
 
 export const metadata: Metadata = {
-  title: "AegisPR V2 — Reviews with evidence",
+  title: "AegisPR | Pull request verification",
   description: "Commit-pinned review, repeated execution, signed evidence and bounded model specialists.",
   icons: { icon: "/brand/aegispr-logo.jpg", apple: "/brand/aegispr-logo.jpg" },
 };
@@ -20,23 +20,23 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <Link className="brand" href="/" aria-label="AegisPR home">
             <span className="brand-shield" aria-hidden="true" />
             <span>Aegis<span className="brand-light">PR</span></span>
-            <span className="v2-brand-tag">V2</span>
           </Link>
           <nav aria-label="Primary navigation">
-            <Link href="/">Reviews</Link>
+            <Link href="/#workspace">Reviews</Link>
+            <Link href="/#compare-versions">Compare V1 and V2</Link>
             <Link href="/benchmarks">Benchmarks</Link>
             <Link href="/settings">Models & limits</Link>
             <Link href="/guide">Getting started</Link>
             <a href="https://github.com/Hari-Aditya-003/AegisPR-V2-Apart-Research" rel="noreferrer">GitHub ↗</a>
           </nav>
-          <span className="v2-header-context">Apart Research workspace</span>
+          <Link className="mobile-review-link" href="/#workspace">Reviews</Link>
         </header>
         <DeploymentControls />
         <main id="main-content">{children}</main>
         <footer>
           <span>AegisPR</span>
           <p>Pull request review and verification</p>
-          <p>V2 · Apart Research development · Prior work disclosed</p>
+          <p>Apart Research · <a href="https://github.com/Hari-Aditya-003/AegisPR-V2-Apart-Research/blob/main/PRIOR_WORK.md">Prior work</a></p>
         </footer>
       </body>
     </html>

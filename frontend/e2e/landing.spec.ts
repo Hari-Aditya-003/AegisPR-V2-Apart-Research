@@ -1,5 +1,22 @@
 import { expect, test } from "@playwright/test";
 
+test("home keeps the original look and leads to the version comparison and live tools", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  const title = page.getByRole("heading", { name: "Don't trust a PR. Prove it." });
+  await expect(title).toBeVisible();
+  const hero = page.getByRole("region", { name: "Don't trust a PR. Prove it." });
+  await hero.getByRole("link", { name: "Compare V1 and V2" }).click();
+  await expect(page).toHaveURL(/#compare-versions$/);
+  await expect(page.getByRole("table", { name: "AegisPR V1 and V2 capabilities" })).toBeVisible();
+  await expect(page.getByRole("columnheader", { name: "V1 foundation" })).toBeVisible();
+  await expect(page.getByRole("columnheader", { name: "V2 additions" })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await hero.getByRole("link", { name: "Try a live fixture" }).click();
+  await expect(page).toHaveURL(/#run-fixture$/);
+  await expect(page.getByRole("button", { name: "Run safe example" })).toBeVisible();
+});
+
 test("paused motion does not hide newly entered evidence panels", async ({ page }) => {
   await page.goto("/legacy");
   await page.getByRole("button", { name: /Pause animation$/ }).click();
