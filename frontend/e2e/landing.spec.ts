@@ -8,12 +8,14 @@ test("home keeps the original look and leads to the version comparison and live 
   const hero = page.getByRole("region", { name: "Don't trust a PR. Prove it." });
   await hero.getByRole("link", { name: "Compare V1 and V2" }).click();
   await expect(page).toHaveURL(/#compare-versions$/);
+  await expect(page.locator("#compare-versions").getByRole("heading")).toBeInViewport();
   await expect(page.getByRole("table", { name: "AegisPR V1 and V2 capabilities" })).toBeVisible();
   await expect(page.getByRole("columnheader", { name: "V1 foundation" })).toBeVisible();
   await expect(page.getByRole("columnheader", { name: "V2 additions" })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await hero.getByRole("link", { name: "Try a live fixture" }).click();
   await expect(page).toHaveURL(/#run-fixture$/);
+  await expect(page.locator("#run-fixture").getByRole("heading")).toBeInViewport();
   await expect(page.getByRole("button", { name: "Run safe example" })).toBeVisible();
 });
 
