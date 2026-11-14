@@ -76,7 +76,7 @@ The two live provider checks returned schema-valid responses from Nemotron Light
 | A-02 signed evidence | Implemented, tested offline and through API/browser | Operational key rotation, independent key distribution, release signing |
 | A-03 benchmark harness | 12 pinned synthetic pairs, repeated raw fixture measurements; external lock validation | A licensed external ReviewBench subset and independent labels, model outputs and repeated comparisons |
 | A-04 GitHub App | Signed webhook, transactional deduplication, pinned reads, neutral check publisher | Actual app registration and owner installation, reachable HTTPS webhook, live delivery/check tests |
-| A-05 safe demonstration | New evidence on each curated fixture run; private Dell preview | Public judge URL and clean-browser public-access acceptance |
+| A-05 safe demonstration | Public V2 workspace serves fresh curated fixture evidence via the Dell host | Long-lived named origin tunnel for uptime independent of a Quick Tunnel URL |
 | B-01 coverage and bundling | All retrieved changed files accounted for; path grouping and lexical GPU prioritization | Full import/AST dependency neighborhoods, related-file acquisition, measured retrieval benefit |
 | B-02 scanners | Bounded diff rule packs and SARIF normalization/export | Automatic isolated Semgrep/linter execution and scanner-specific fixtures |
 | B-03 incremental review | Stable fingerprints and new/persisting/resolved comparison | Reappeared-finding lifecycle and live GitHub comment deduplication |

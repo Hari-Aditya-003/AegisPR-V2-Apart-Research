@@ -20,6 +20,12 @@ def test_public_demo_generates_and_verifies_new_receipt(tmp_path):
     run_id = result.json()['id']
     run = client.get('/api/v2/demo/' + run_id).json()
     assert run['status'] == 'REGRESSION_FOUND'
+    assert all(check['resources']['cpu_us'] > 0 and check['resources']['peak_rss_bytes'] > 0
+               for check in run['executions'])
+    assert run['receipt']['payload']['executions'] == run['executions']
+    runtime = client.get('/api/v2/runtime')
+    assert runtime.status_code == 200
+    assert runtime.json()['peak_rss_bytes'] > 0
     assert len(run['executions']) == 6
     receipt = client.get('/api/v2/demo/' + run_id + '/receipt').json()
     assert receipt['payload']['id'] == run_id

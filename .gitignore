@@ -27,3 +27,4 @@ data/*.sqlite*
 *.tsbuildinfo
 work/
 website/.sites-runtime/
+.wrangler/

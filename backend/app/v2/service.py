@@ -127,6 +127,9 @@ class ReviewService:
                 for item in files if item.get('patch')
             ], limit=20)
             run['context_accelerator'] = ranking.accelerator
+            run['ranking_resources'] = {'accelerator': ranking.accelerator, 'device': ranking.device,
+                                        'vram_used_bytes': ranking.vram_used_bytes,
+                                        'vram_total_bytes': ranking.vram_total_bytes}
             run['context_order'] = [document.path for document in ranking.documents]
             self.event(run, 'context', f'Context ranked with {ranking.accelerator}; lexical vectors, not learned code embeddings')
             for coverage, file in zip(run['coverage'], files):

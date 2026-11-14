@@ -28,15 +28,17 @@ def probe_code(case, source: str) -> str:
         return (source + '\nconst outputs=[];\n' +
                 f'for(const args of {json.dumps(case.arguments)}) {{\n' +
                 "try { outputs.push(await evaluate(...args)); } catch(e) { outputs.push('ERROR:'+e.constructor.name); }\n}\n" +
-                "console.log(JSON.stringify({observations:outputs}));\n" +
+                "const usage = process.resourceUsage();\n" +
+                "console.log(JSON.stringify({observations:outputs, resources:{cpu_us:usage.userCPUTime+usage.systemCPUTime, peak_rss_bytes:usage.maxRSS*1024}}));\n" +
                 f'process.exit(JSON.stringify(outputs)===JSON.stringify({json.dumps(case.expected_base)})?0:1);\n')
-    return ('import json\n' + source + '\n' +
+    return ('import json, resource, sys\n' + source + '\n' +
             'outputs=[]\n' +
             f'for args in {case.arguments!r}:\n' +
             '    try: value=evaluate(*args)\n' +
             "    except Exception as exc: value='ERROR:'+type(exc).__name__\n" +
             '    outputs.append(value)\n' +
-            "print(json.dumps({'observations':outputs},sort_keys=True))\n" +
+            'usage=resource.getrusage(resource.RUSAGE_SELF)\n' +
+            "print(json.dumps({'observations':outputs,'resources':{'cpu_us':round((usage.ru_utime+usage.ru_stime)*1000000),'peak_rss_bytes':usage.ru_maxrss*(1 if sys.platform=='darwin' else 1024)}},sort_keys=True))\n" +
             f'raise SystemExit(0 if outputs == {case.expected_base!r} else 1)\n')
 
 
@@ -76,10 +78,12 @@ class FixtureExecutor:
                                                 capture_output=True, text=True, timeout=10)
                         if len(result.stdout) + len(result.stderr) > 16000:
                             raise ValueError('Fixture output limit exceeded')
-                        observations = json.loads(result.stdout)['observations']
+                        report = json.loads(result.stdout)
+                        observations = report['observations']
                         status = 'pass' if result.returncode == 0 else 'fail' if result.returncode == 1 else 'error'
                         item = {'branch': branch, 'repeat': repetition + 1, 'status': status, 'exit_code': result.returncode,
                                 'observations': observations, 'stdout': result.stdout, 'stderr': result.stderr,
+                                'resources': report['resources'],
                                 'test_sha256': hashlib.sha256(code.encode()).hexdigest()}
                     except (subprocess.TimeoutExpired, OSError, ValueError, KeyError):
                         item = {'branch': branch, 'repeat': repetition + 1, 'status': 'error', 'exit_code': None,

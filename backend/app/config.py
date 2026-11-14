@@ -42,6 +42,7 @@ class Settings(BaseSettings):
     v2_enable_models: bool = False
     v2_daily_reviews: int = Field(default=100, ge=1, le=1000)
     v2_allowed_repositories: str = "Hari-Aditya-003/AegisPR-V2-Apart-Research"
+    v2_runtime_label: str = Field(default="Self-hosted", max_length=80)
     v2_worker_url: str | None = None
     v2_worker_token: str | None = Field(default=None, repr=False)
     v2_worker_public_key: str | None = None

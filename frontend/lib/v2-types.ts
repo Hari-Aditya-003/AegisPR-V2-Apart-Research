@@ -1,6 +1,6 @@
 export type Coverage = { file: string; state: string; reason: string | null; category: string; added_lines: number[]; evidence_id: string; bundle: string };
 export type V2Finding = { id: string; fingerprint: string; category: string; severity: string; claim: string; file: string; line: number; status: string; evidence_ids: string[]; provenance: string };
-export type Execution = { branch: string; repeat: number; status: string; exit_code: number | null; observations: unknown[]; stdout: string; stderr: string; duration_ms: number; executor: string; environment_digest: string; network: string; provenance: string };
+export type Execution = { resources?: { cpu_us: number; peak_rss_bytes: number }; branch: string; repeat: number; status: string; exit_code: number | null; observations: unknown[]; stdout: string; stderr: string; duration_ms: number; executor: string; environment_digest: string; network: string; provenance: string };
 export type Cost = { accounted_cost_usd: number; calls: number; input_tokens: number; output_tokens: number; cache_hits: number };
 export type EvidenceEvent = { id: string; stage: string; detail: string; timestamp: string; data: Record<string, unknown> };
 export type Receipt = { schema: string; key_id: string; sha256: string; signature: string; public_key: string; payload: Record<string, unknown>; notice: string };
@@ -9,6 +9,7 @@ export type Review = {
   id: string; mode: string; fixture_id: string | null; pull_request_url: string | null; title: string;
   status: string; base_sha: string; head_sha: string; created_at: string; completed_at: string | null; duration_ms: number;
   policy: { use_models: boolean; allow_external_code: boolean; public_demo?: boolean; arbitrary_execution: boolean };
+  ranking_resources?: { accelerator: string; device: string | null; vram_used_bytes: number | null; vram_total_bytes: number | null };
   coverage: Coverage[]; findings: V2Finding[]; events: EvidenceEvent[]; executions: Execution[];
   model_invocations: Invocation[]; cost: Cost; limitations: string[]; receipt: Receipt | null;
   repair: null | { status: string; patch: string; write_back: boolean; provenance: string; checks: Execution[]; previous_receipt_sha256: string };

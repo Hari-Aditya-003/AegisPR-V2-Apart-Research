@@ -5,7 +5,9 @@ import asyncio
 import hashlib
 import json
 import re
+import resource
 import secrets
+import sys
 import time
 from collections import defaultdict, deque
 from typing import Literal
@@ -68,7 +70,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.middleware('http')
     async def boundary(request: Request, call_next):
         path = request.url.path
-        public = (path == '/health' or path in {'/api/v2/public-key', '/api/v2/verify-receipt', '/api/github/webhook'} or
+        public = (path == '/health' or path in {'/api/v2/runtime', '/api/v2/public-key', '/api/v2/verify-receipt', '/api/github/webhook'} or
                   path == '/api/v2/demo' or path.startswith('/api/v2/demo/'))
         if not public and path.startswith('/api/') and request.method != 'OPTIONS':
             token = settings.api_access_token
@@ -137,9 +139,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             except (httpx.HTTPError, ValueError):
                 gpu = 'unavailable'
         return {'status': 'ok', 'version': '2.0.0', 'scope': 'curated fixtures and static PR review',
-                'arbitrary_execution': False, 'gpu_accelerator': gpu,
+                'arbitrary_execution': False, 'gpu_accelerator': gpu, 'runtime_label': settings.v2_runtime_label,
                 'executor': 'remote curated fixture worker' if settings.v2_worker_url else 'local committed fixtures',
                 'providers': {'nebius': bool(settings.nebius_api_key), 'vultr': bool(settings.vultr_api_key)}}
+
+    @app.get('/api/v2/runtime')
+    def runtime():
+        usage = resource.getrusage(resource.RUSAGE_SELF)
+        return {'label': settings.v2_runtime_label,
+                'scope': 'API process since startup',
+                'cpu_seconds': round(usage.ru_utime + usage.ru_stime, 3),
+                'peak_rss_bytes': usage.ru_maxrss * (1 if sys.platform == 'darwin' else 1024)}
 
     @app.get('/api/v2/demo')
     def fixtures():

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { createReview, getModelConfig, getV2Health, listFixtures, listReviews, startSafeDemo } from '@/lib/v2-api';
+import { RuntimePanel } from './runtime-panel';
 import { accessChangedEvent } from '@/lib/api';
 import type { Fixture, ModelConfig, Review, V2Health } from '@/lib/v2-types';
 
@@ -13,7 +14,7 @@ export const label = (text: string) => text.replaceAll('_', ' ').toLowerCase();
 export function Workspace({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   return <div className="v2-layout"><aside className="v2-sidebar"><p className="v2-overline">WORKSPACE</p>
-    <nav aria-label="Workspace navigation">{[['/', '◈', 'Reviews'], ['/benchmarks', '▥', 'Benchmarks'], ['/settings', '⚙', 'Models & limits']].map(([href, icon, name]) =>
+    <nav aria-label="Workspace navigation">{[['/', '◈', 'Reviews'], ['/benchmarks', '▥', 'Benchmarks'], ['/settings', '⚙', 'Models & limits'], ['/guide', '↗', 'Getting started']].map(([href, icon, name]) =>
       <Link key={href} href={href} className={path === href || href === '/' && path?.startsWith('/reviews') ? 'selected' : ''}><span aria-hidden="true">{icon}</span>{name}</Link>)}</nav>
     <div className="v2-sidebar-bottom"><span className="v2-status-dot" />Evidence first<p>Models propose.<br />Executed checks establish proof.</p>
       <a href="https://github.com/Hari-Aditya-003/AegisPR-V2-Apart-Research/blob/main/PRIOR_WORK.md" target="_blank" rel="noreferrer">Prior work & provenance ↗</a></div>
@@ -68,8 +69,13 @@ export function ReviewDashboard() {
     finally { setBusy(false); }
   }
   const reproduced = reviews.filter(run => run.status === 'REGRESSION_FOUND').length;
-  return <Workspace><div className="v2-page-heading"><div><p className="v2-overline">AEGISPR / REVIEW WORKSPACE</p><h1>Reviews with evidence.</h1><p>Inspect changes. Reproduce behavior. Keep uncertainty visible.</p></div>
+  return <Workspace><div className="v2-page-heading"><div><p className="v2-overline">AEGISPR / REVIEW WORKSPACE</p><h1>Reviews with evidence.</h1><p>Compare base and head revisions and inspect the evidence behind each result.</p></div>
     <button className="v2-button secondary" onClick={() => setForm(!form)}>Review a pull request <span aria-hidden="true">↗</span></button></div>
+    <section className="v2-panel v2-start-guide" aria-labelledby="start-guide">
+      <h2 id="start-guide">Start with a guided example</h2>
+      <p>Choose a fixture below and select <strong>Run safe example</strong>. Open <strong>Proof</strong> to compare checks on the old and new revisions. The <strong>Repair</strong> tab can verify a prewritten fix for the coupon example.</p>
+      <Link href="/guide">Getting started and operator setup ↗</Link>
+    </section>
     <div className="v2-metrics"><article><span>RECENT REVIEWS</span><strong>{loading ? '—' : reviews.length}</strong><small>Latest up to 30 records</small></article>
       <article><span>REPRODUCED REGRESSIONS</span><strong>{loading ? '—' : reproduced}</strong><small>Within executed scope</small></article>
       <article className="v2-cost-metric"><span>ACCOUNTED MODEL COST</span><strong>{config ? money(config.budget.accounted_cost_usd) : '—'}</strong><small>App ledger · conservative estimate</small></article>
@@ -92,6 +98,7 @@ export function ReviewDashboard() {
         <dl><div><dt>Execution</dt><dd>{health?.executor ?? 'Checking connection'}</dd></div><div><dt>GPU worker</dt><dd>{health?.gpu_accelerator === 'cuda' ? 'CUDA available' : health?.gpu_accelerator ?? 'Checking'}</dd></div>
           <div><dt>Paid specialists</dt><dd>{config ? config.enabled ? 'Available with consent' : 'Disabled by operator' : 'Owner access required'}</dd></div><div><dt>Write back</dt><dd>Off by default</dd></div></dl>
         <p>Safe examples use fixed, reviewed source. Free-form repository execution stays closed until its isolation checks pass.</p><Link href="/settings">View models & limits <span aria-hidden="true">↗</span></Link></section></div>
+    <RuntimePanel />
     <section className="v2-panel v2-recent"><div className="v2-panel-heading"><div><span className="v2-overline">ACTIVITY</span><h2>Recent reviews</h2></div><button className="v2-text-button" onClick={() => void load()}>Refresh ↻</button></div>
       {ownerError ? <p className="v2-empty">{ownerError}</p> : loading ? <p className="v2-empty">Loading reviews…</p> : reviews.length === 0 ? <div className="v2-empty"><span aria-hidden="true">◈</span><h3>No reviews yet</h3><p>Start a safe example to create the first evidence record.</p></div> :
         <div className="v2-table-wrap"><table><thead><tr><th>Review</th><th>Evidence</th><th>Findings</th><th>Model cost</th></tr></thead><tbody>{reviews.map(run => <tr key={run.id}><td><Link href={`/reviews/${run.id}`}>{run.title}<small>{run.mode === 'fixture' ? 'Controlled fixture' : 'Pinned public PR'} · {run.head_sha?.slice(0, 8) || 'Collecting'}</small></Link></td><td><Status value={run.status} /></td><td>{run.findings.length}</td><td>{money(run.cost.accounted_cost_usd)}</td></tr>)}</tbody></table></div>}

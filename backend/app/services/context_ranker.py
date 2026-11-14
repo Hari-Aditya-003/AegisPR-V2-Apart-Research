@@ -22,6 +22,8 @@ class ContextRanking(BaseModel):
     documents: list[ContextDocument] = Field(default_factory=list)
     accelerator: str = "cpu"
     device: str | None = None
+    vram_used_bytes: int | None = Field(default=None, ge=0)
+    vram_total_bytes: int | None = Field(default=None, gt=0)
 
 
 class ContextRanker:

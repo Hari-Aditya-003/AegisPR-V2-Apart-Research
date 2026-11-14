@@ -2,7 +2,19 @@
 
 This is the separate **Apart Research hackathon development repository**, duplicated from [Hari-Aditya-003/AegisPR](https://github.com/Hari-Aditya-003/AegisPR) on **November 10, 2026**. The original repository remains unchanged.
 
-## Current V2 foundation preview
+## Try AegisPR online
+
+[Open the AegisPR workspace](https://aegispr-v2.snap-hub.workers.dev). Start with the coupon fixture, then open **Proof** for the six checks and signed evidence. Use **Repair** to verify the prewritten fixture patch and **Resource usage** to inspect the runtime. The public fixture path requires no credentials or model credits.
+
+| Workflow | Access |
+| --- | --- |
+| Curated fixture verification, proof and fixture repair | Public workspace |
+| Read-only source review for pinned, allowlisted GitHub PRs, model settings and benchmark history | Owner access code |
+| Original V1 generated-test verification and repair | Trusted private self-host installation |
+
+See [Getting started](https://aegispr-v2.snap-hub.workers.dev/guide), the [architecture and resource guide](docs/release-architecture.md), the [online deployment runbook](deploy/README.md), and the [recorded live checks with screenshots](docs/release-verification.md).
+
+## V2 scope
 
 The new workspace adds pinned source review, changed-file coverage, repeated curated remote execution, signed evidence receipts, category-based Nebius/Vultr model proposals with a shared spending ledger, an advisory critic, scoped fixture repair, and a measured fixture benchmark dashboard. The UI is updated for these features. See [the V2 setup, limitations, and roadmap acceptance status](docs/v2-release.md) and [security policy](SECURITY.md).
 
