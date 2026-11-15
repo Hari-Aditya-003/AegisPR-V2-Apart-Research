@@ -168,3 +168,43 @@ test("reviewer can generate and verify an isolated repair", async ({ page }) => 
   await expect(page.getByRole("heading", { name: "Repair evidence" })).toBeVisible();
   await expect(page.getByText("View isolated patch")).toBeVisible();
 });
+
+test("guide pins chapter navigation and links to marked close-ups", async ({ page }) => {
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/guide");
+    const nav = page.getByRole("navigation", { name: "Guide chapters" });
+    const chapter = nav.getByRole("link", { name: "Verify proof and repair" });
+    const proof = page.locator("#proof-and-repair");
+    await chapter.click();
+    await expect(page).toHaveURL(/#proof-and-repair$/);
+    await expect(proof.getByRole("heading", { name: "Verify proof and repair" })).toBeInViewport();
+    await expect(chapter).toHaveAttribute("aria-current", "location");
+    const top = await nav.evaluate(element => element.getBoundingClientRect().top);
+    await page.evaluate(() => window.scrollBy(0, 180));
+    expect(await nav.evaluate(element => element.getBoundingClientRect().top)).toBeCloseTo(top, 0);
+    await expect(proof.getByText("What counts as evidence")).toBeVisible();
+
+    const closeUp = proof.getByRole("img", { name: /Verify receipt button/ });
+    await closeUp.scrollIntoViewIfNeeded();
+    await expect.poll(() => closeUp.evaluate(image => (image as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+    const zoom = proof.getByRole("link", { name: /Enlarge close-up: Verify receipt/ });
+    await expect(zoom).toHaveAttribute("href", "/guide-focus/proof.webp");
+    await expect(zoom).toHaveAttribute("target", "_blank");
+    const crop = await page.request.get(new URL("/guide-focus/proof.webp", page.url()).href);
+    expect(crop.ok()).toBe(true);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  }
+});
+
+test("guide keeps the active chapter visible in a short desktop window", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 365 });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/guide#compare");
+  const nav = page.getByRole("navigation", { name: "Guide chapters" });
+  const active = nav.getByRole("link", { name: "Compare versions and use V1" });
+  await expect(active).toHaveAttribute("aria-current", "location");
+  await expect(active).toBeInViewport({ ratio: 0.95 });
+  expect(await nav.evaluate(element => element.scrollTop)).toBeGreaterThan(0);
+});
