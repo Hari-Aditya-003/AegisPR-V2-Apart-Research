@@ -4,16 +4,8 @@ import { FormEvent, useState } from "react";
 import { saveAccessCode } from "@/lib/api";
 
 export function DeploymentControls() {
-  const [paused, setPaused] = useState(false);
   const [code, setCode] = useState("");
   const [message, setMessage] = useState("");
-
-  function toggleMotion() {
-    const next = !paused;
-    setPaused(next);
-    if (next) document.documentElement.dataset.motion = "paused";
-    else document.documentElement.removeAttribute("data-motion");
-  }
 
   function save(event: FormEvent) {
     event.preventDefault();
@@ -35,7 +27,6 @@ export function DeploymentControls() {
   }
 
   return <div className="deployment-controls">
-    <button type="button" className="motion-control" aria-pressed={paused} onClick={toggleMotion}>{paused ? "Resume animation" : "Pause animation"}</button>
     <details className="access-control"><summary>Private deployment access</summary>
       <form onSubmit={save}>
         <p>Use the code provided by the deployment owner. It is kept only in this tab&apos;s session.</p>

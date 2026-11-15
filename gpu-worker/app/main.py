@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hmac
 import os
+import subprocess
 
 from fastapi import Depends, FastAPI, Header, HTTPException
 from pydantic import BaseModel, Field
@@ -36,6 +37,27 @@ def health() -> dict:
         "device": ranker.device,
         "workload": "hashed term-document cosine ranking",
     }
+
+
+@app.get("/runtime", dependencies=[Depends(authorize)])
+def runtime() -> dict[str, float | None]:
+    metrics: dict[str, float | None] = {"gpu_percent": None, "vram_percent": None}
+    if ranker.accelerator != "cuda":
+        return metrics
+    try:
+        result = subprocess.run(
+            ["nvidia-smi", "--id=0", "--query-gpu=utilization.gpu,memory.used,memory.total",
+             "--format=csv,noheader,nounits"],
+            capture_output=True, text=True, check=True, timeout=1,
+        )
+        usage, used, total = (item.strip() for item in result.stdout.split(","))
+        if usage.isdecimal() and 0 <= int(usage) <= 100:
+            metrics["gpu_percent"] = float(usage)
+        if used.isdecimal() and total.isdecimal() and 0 < int(total) and int(used) <= int(total):
+            metrics["vram_percent"] = round(100 * int(used) / int(total), 1)
+    except (OSError, subprocess.SubprocessError, ValueError):
+        pass
+    return metrics
 
 
 @app.post("/rank", response_model=RankingResult, dependencies=[Depends(authorize)])

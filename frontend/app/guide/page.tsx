@@ -85,8 +85,8 @@ export default function GettingStarted() {
             <li>Click <strong>Verify receipt</strong> and look for <strong>Signature valid</strong>. <strong>Download receipt</strong> saves the signed JSON.
               <GuideImage file="proof" caption="Verify receipt button and the Signature valid result underneath." />
             </li>
-            <li>In <strong>Resource usage</strong>, read API CPU and peak RAM, fixture CPU and RSS, and CUDA VRAM. Chromium may also report its JavaScript heap. Read the scope note before comparing the numbers.
-              <GuideImage file="resources" caption="Resource usage panel with fixture CPU time and CUDA device memory outlined." />
+            <li>Read <strong>Resource usage</strong> in the left workspace sidebar. CPU and RAM cover the server host. GPU and VRAM cover the ranking device. Heap shows browser JavaScript memory as a share of its limit when available. A dash means the reading is unavailable.
+              <GuideImage file="resources" caption="Compact resource strip with CPU and GPU percentages outlined." />
             </li>
             <li>Open <strong>Repair</strong> and click <strong>Verify fixture repair</strong>. For the coupon fixture, <strong>fix verified</strong> indicates that all three checks of the prewritten patch passed.
               <GuideImage file="repair" caption="Repair tab showing a verified patch and its three repeat checks." />

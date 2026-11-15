@@ -3,10 +3,10 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
-import { createReview, getModelConfig, getV2Health, listFixtures, listReviews, startSafeDemo } from '@/lib/v2-api';
-import { RuntimePanel } from './runtime-panel';
+import { createReview, getModelConfig, listFixtures, listReviews, startSafeDemo } from '@/lib/v2-api';
+import { RuntimeRail } from './runtime-rail';
 import { accessChangedEvent } from '@/lib/api';
-import type { Fixture, ModelConfig, Review, V2Health } from '@/lib/v2-types';
+import type { Fixture, ModelConfig, Review } from '@/lib/v2-types';
 
 export const money = (amount: number) => '$' + amount.toFixed(amount > 0 && amount < .01 ? 6 : 2);
 export const label = (text: string) => text.replaceAll('_', ' ').toLowerCase();
@@ -16,6 +16,7 @@ export function Workspace({ children }: { children: React.ReactNode }) {
   return <div className="v2-layout"><aside className="v2-sidebar"><p className="v2-overline">WORKSPACE</p>
     <nav aria-label="Workspace navigation">{[['/#workspace', '◈', 'Reviews'], ['/benchmarks', '▥', 'Benchmarks'], ['/settings', '⚙', 'Models & limits'], ['/guide', '↗', 'Getting started']].map(([href, icon, name]) =>
       <Link key={href} href={href} className={path === href || href === '/#workspace' && (path === '/' || path?.startsWith('/reviews')) ? 'selected' : ''}><span aria-hidden="true">{icon}</span>{name}</Link>)}</nav>
+    <RuntimeRail />
     <div className="v2-sidebar-bottom"><span className="v2-status-dot" />Evidence first<p>Models propose.<br />Executed checks establish proof.</p>
       <a href="https://github.com/Hari-Aditya-003/AegisPR-V2-Apart-Research/blob/main/PRIOR_WORK.md" target="_blank" rel="noreferrer">Prior work & provenance ↗</a></div>
   </aside><div className="v2-content">{children}</div></div>;
@@ -30,7 +31,6 @@ export function ReviewDashboard() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [fixtures, setFixtures] = useState<Fixture[]>([]);
   const [config, setConfig] = useState<ModelConfig | null>(null);
-  const [health, setHealth] = useState<V2Health | null>(null);
   const [fixture, setFixture] = useState('py-coupon-floor');
   const [loading, setLoading] = useState(true);
   const [ownerError, setOwnerError] = useState('');
@@ -42,11 +42,10 @@ export function ReviewDashboard() {
 
   const load = useCallback(async () => {
     setLoading(true); setOwnerError('');
-    const results = await Promise.allSettled([listReviews(), getModelConfig(), listFixtures(), getV2Health()]);
+    const results = await Promise.allSettled([listReviews(), getModelConfig(), listFixtures()]);
     if (results[0].status === 'fulfilled') setReviews(results[0].value); else setOwnerError('Saved reviews require owner access. Safe examples are available below.');
     if (results[1].status === 'fulfilled') setConfig(results[1].value);
     if (results[2].status === 'fulfilled') setFixtures(results[2].value); else setError('The review service is unavailable. Check the connection and retry.');
-    if (results[3].status === 'fulfilled') setHealth(results[3].value);
     setLoading(false);
   }, []);
   useEffect(() => { void load(); window.addEventListener(accessChangedEvent, load); return () => window.removeEventListener(accessChangedEvent, load); }, [load]);
@@ -88,17 +87,12 @@ export function ReviewDashboard() {
       {useModels && <label className="v2-checkbox"><input type="checkbox" required checked={consent} onChange={event => setConsent(event.target.checked)} />Send this public source to the configured Nebius and Vultr models for this review</label>}
       <button className="v2-button" disabled={busy}>Start pinned review</button></form>}
     {error && <p className="v2-error" role="alert">{error}</p>}
-    <div className="v2-overview-grid"><section id="run-fixture" className="v2-panel v2-demo-panel"><div className="v2-panel-heading"><span className="v2-overline">LIVE SAFE EXAMPLE</span><span className="v2-badge green">No tokens required</span></div>
+    <section id="run-fixture" className="v2-panel v2-demo-panel"><div className="v2-panel-heading"><span className="v2-overline">LIVE SAFE EXAMPLE</span><span className="v2-badge green">No tokens required</span></div>
       <h2>Run it. Then inspect the proof.</h2><p>A committed fixture runs on base and head three times each. The output, exact commits, and signed receipt are produced for your new run.</p>
       <label className="v2-overline" htmlFor="safe-fixture">CHOOSE A FIXTURE</label><select id="safe-fixture" value={fixture} onChange={event => setFixture(event.target.value)}>
         {fixtures.length ? fixtures.map(item => <option key={item.id} value={item.id}>{item.title} · {item.language}</option>) : <option value="py-coupon-floor">Coupon boundary · Python</option>}</select>
       <div className="v2-demo-action"><button className="v2-button" disabled={busy} onClick={demo}>{busy ? 'Starting execution…' : 'Run safe example'} <span aria-hidden="true">→</span></button><small>Prewritten tests · controlled fixture<br />No repository writes</small></div>
-      <div className="v2-mini-pipeline"><span>BASE + HEAD</span><b>→</b><span>3 REPEATS</span><b>→</b><span>SIGNED EVIDENCE</span></div></section>
-      <section className="v2-panel v2-system"><div className="v2-panel-heading"><h2>Execution environment</h2><span className="v2-status-dot" /></div>
-        <dl><div><dt>Execution</dt><dd>{health?.executor ?? 'Checking connection'}</dd></div><div><dt>GPU worker</dt><dd>{health?.gpu_accelerator === 'cuda' ? 'CUDA available' : health?.gpu_accelerator ?? 'Checking'}</dd></div>
-          <div><dt>Paid specialists</dt><dd>{config ? config.enabled ? 'Available with consent' : 'Disabled by operator' : 'Owner access required'}</dd></div><div><dt>Write back</dt><dd>Off by default</dd></div></dl>
-        <p>Safe examples use fixed, reviewed source. Free-form repository execution stays closed until its isolation checks pass.</p><Link href="/settings">View models & limits <span aria-hidden="true">↗</span></Link></section></div>
-    <RuntimePanel />
+    </section>
     <section className="v2-panel v2-recent"><div className="v2-panel-heading"><div><span className="v2-overline">ACTIVITY</span><h2>Recent reviews</h2></div><button className="v2-text-button" onClick={() => void load()}>Refresh ↻</button></div>
       {ownerError ? <p className="v2-empty">{ownerError}</p> : loading ? <p className="v2-empty">Loading reviews…</p> : reviews.length === 0 ? <div className="v2-empty"><span aria-hidden="true">◈</span><h3>No reviews yet</h3><p>Start a safe example to create the first evidence record.</p></div> :
         <div className="v2-table-wrap"><table><thead><tr><th>Review</th><th>Evidence</th><th>Findings</th><th>Model cost</th></tr></thead><tbody>{reviews.map(run => <tr key={run.id}><td><Link href={`/reviews/${run.id}`}>{run.title}<small>{run.mode === 'fixture' ? 'Controlled fixture' : 'Pinned public PR'} · {run.head_sha?.slice(0, 8) || 'Collecting'}</small></Link></td><td><Status value={run.status} /></td><td>{run.findings.length}</td><td>{money(run.cost.accounted_cost_usd)}</td></tr>)}</tbody></table></div>}

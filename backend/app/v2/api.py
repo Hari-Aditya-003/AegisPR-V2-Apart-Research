@@ -25,6 +25,7 @@ from app.v2.evaluation import run_seeded
 from app.v2.evidence import ReceiptSigner, sarif_report
 from app.v2.github_app import GitHubAppPublisher, allowed_repositories, verify_webhook
 from app.v2.models import CATALOG, PRICE_DATE
+from app.v2.runtime import RuntimeSnapshot
 from app.v2.service import ReviewService
 from app.v2.store import DuplicateDelivery
 
@@ -64,6 +65,7 @@ class Publish(BaseModel):
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or get_settings()
     service = ReviewService(settings)
+    runtime_snapshot = RuntimeSnapshot(settings.gpu_worker_url, settings.gpu_worker_token)
     app = FastAPI(title='AegisPR V2 Evidence API', version='2.0.0',
                   docs_url='/docs' if settings.app_env != 'production' else None)
     app.state.reviews = service
@@ -148,10 +150,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 'providers': {'nebius': bool(settings.nebius_api_key), 'vultr': bool(settings.vultr_api_key)}}
 
     @app.get('/api/v2/runtime')
-    def runtime():
+    async def runtime():
         usage = resource.getrusage(resource.RUSAGE_SELF)
         return {'label': settings.v2_runtime_label,
                 'scope': 'API process since startup',
+                'utilization': await runtime_snapshot.get(),
                 'cpu_seconds': round(usage.ru_utime + usage.ru_stime, 3),
                 'peak_rss_bytes': usage.ru_maxrss * (1 if sys.platform == 'darwin' else 1024)}
 
