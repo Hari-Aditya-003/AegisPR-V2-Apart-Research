@@ -14,6 +14,8 @@ This is the separate **Apart Research hackathon development repository**, duplic
 
 See [Getting started](https://aegispr-v2.snap-hub.workers.dev/guide), the [architecture and resource guide](docs/release-architecture.md), the [online deployment runbook](deploy/README.md), and the [recorded live checks with screenshots](docs/release-verification.md).
 
+The [illustrated guide](https://aegispr-v2.snap-hub.workers.dev/guide) shows the live controls for proof, repair, pinned PR input, model consent, and fixture benchmarks. Signed-out visitors can read the dated benchmark reference and model catalog. Owners can queue one or three suite passes, follow progress, and download the raw result. [Live walkthrough and test evidence](https://github.com/Hari-Aditya-003/AegisPR-V2-Apart-Research/releases/tag/v2.0.0-walkthrough.1).
+
 ## V2 scope
 
 The new workspace adds pinned source review, changed-file coverage, repeated curated remote execution, signed evidence receipts, category-based Nebius/Vultr model proposals with a shared spending ledger, an advisory critic, scoped fixture repair, and a measured fixture benchmark dashboard. The UI is updated for these features. See [the V2 setup, limitations, and roadmap acceptance status](docs/v2-release.md) and [security policy](SECURITY.md).

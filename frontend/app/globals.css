@@ -512,3 +512,24 @@ html[data-motion=paused] *, html[data-motion=paused] *::before, html[data-motion
   .version-table :is(th, td) { padding: .7rem .5rem; }
   .version-table tr > :first-child { width: 25%; }
 }
+
+.v2-help-panel { margin-bottom: 1.25rem; }
+.v2-help-panel ol { padding-inline-start: 1.25rem; line-height: 1.75; }
+.v2-help-panel a, .v2-reference a { color: #78edc8; text-decoration: underline; text-underline-offset: .2em; }
+.v2-run-controls { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin-bottom: 1rem; }
+.v2-run-controls select { min-width: 0; max-width: 100%; color: var(--ink); background: var(--surface-2); border: 1px solid var(--line); padding: .6rem; border-radius: 6px; }
+.v2-access-note { margin-top: .9rem; color: #bed6d3; }
+.v2-reference { margin-top: 1.5rem; }
+
+.illustrated-guide { width: min(70rem, calc(100% - 2rem)); }
+.guide-intro { margin-bottom: 1.75rem; }
+.guide-intro p { max-width: 64ch; color: var(--muted); line-height: 1.7; }
+.guide-chapters { display: flex; flex-wrap: wrap; gap: .6rem 1.15rem; margin-bottom: 2rem; }
+.guide-chapters a { padding-block: .4rem; }
+.illustrated-guide section { scroll-margin-top: 96px; }
+.illustrated-guide section li, .illustrated-guide section p { line-height: 1.65; }
+.illustrated-guide code { overflow-wrap: anywhere; color: #a6e6d9; }
+.illustrated-guide section a, .guide-chapters a { color: #78edc8; text-decoration: underline; text-underline-offset: .2em; }
+.guide-figure { margin: 1.5rem 0; }
+.guide-figure img { display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: 10px; }
+.guide-figure figcaption { padding-top: .65rem; color: var(--muted); font-size: .875rem; }

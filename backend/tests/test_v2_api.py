@@ -55,3 +55,32 @@ def test_webhook_requires_signature_and_deduplicates(tmp_path):
 def test_request_size_is_bounded(tmp_path):
     client = TestClient(make_app(tmp_path))
     assert client.post('/api/v2/demo', content=b'x' * 70000).status_code == 413
+
+
+def test_public_reference_omits_private_fields(tmp_path):
+    client = TestClient(make_app(tmp_path, app_env='production', api_access_token='owner-secret-code'))
+    data = client.get('/api/v2/learn').json()
+    assert data['benchmark']['metrics']['cases'] == 36
+    assert not {'raw', 'id'} & data['benchmark'].keys()
+    assert all(set(model) == {'provider', 'model', 'family', 'input', 'output', 'source'} for model in data['models'])
+    assert client.get('/api/v2/benchmarks/job').status_code == 401
+    assert client.post('/api/v2/benchmarks/job', json={'repeats': 1}).status_code == 401
+
+
+def test_owner_benchmark_queues_and_reports_completion(tmp_path, monkeypatch):
+    async def evaluated(service, *, repeats, on_progress):
+        assert repeats == 1
+        on_progress(len(service.cases))
+        return {'id': 'fixture-report'}
+
+    monkeypatch.setattr('app.v2.api.run_seeded', evaluated)
+    client = TestClient(make_app(tmp_path, app_env='production', api_access_token='owner-secret-code'))
+    headers = {'Authorization': 'Bearer owner-secret-code'}
+    queued = client.post('/api/v2/benchmarks/job', json={'repeats': 1}, headers=headers)
+    assert queued.status_code == 202
+    assert queued.json()['status'] == 'running'
+    finished = client.get('/api/v2/benchmarks/job', headers=headers).json()
+    assert finished['id'] == queued.json()['id']
+    assert finished['status'] == 'completed'
+    assert finished['completed'] == finished['total'] == 12
+    assert finished['report_id'] == 'fixture-report'

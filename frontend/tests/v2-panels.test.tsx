@@ -1,9 +1,9 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, expect, it, vi } from 'vitest';
-const mock = vi.hoisted(() => ({ get: vi.fn(), repair: vi.fn(), verify: vi.fn(), feedback: vi.fn(), config: vi.fn(), benchmarks: vi.fn(), benchmark: vi.fn(), download: vi.fn(), sarif: vi.fn() }));
+const mock = vi.hoisted(() => ({ get: vi.fn(), repair: vi.fn(), verify: vi.fn(), feedback: vi.fn(), config: vi.fn(), benchmarks: vi.fn(), job: vi.fn(), start: vi.fn(), reference: vi.fn(), download: vi.fn(), sarif: vi.fn() }));
 vi.mock('next/navigation', () => ({ usePathname: () => '/reviews/one' }));
 vi.mock('../lib/v2-api', () => ({ getReview: mock.get, repairReview: mock.repair, verifyReceipt: mock.verify, saveFeedback: mock.feedback,
-  getModelConfig: mock.config, listBenchmarks: mock.benchmarks, runBenchmark: mock.benchmark, downloadJson: mock.download, getSarif: mock.sarif }));
+  getModelConfig: mock.config, listBenchmarks: mock.benchmarks, getBenchmarkJob: mock.job, startBenchmarkJob: mock.start, getPublicReference: mock.reference, downloadJson: mock.download, getSarif: mock.sarif }));
 import { ReviewDetail, ModelsPanel, BenchmarksPanel } from '../components/v2-panels';
 const run = { id: 'one', title: 'Coupon proof', mode: 'fixture', status: 'REGRESSION_FOUND', base_sha: 'a'.repeat(40), head_sha: 'b'.repeat(40),
   policy: { public_demo: true, use_models: false }, cost: { accounted_cost_usd: 0, calls: 0, input_tokens: 0, output_tokens: 0, cache_hits: 0 },
@@ -11,7 +11,7 @@ const run = { id: 'one', title: 'Coupon proof', mode: 'fixture', status: 'REGRES
   events: [{ id: 'E1', stage: 'execution', detail: 'Executed', data: {} }], coverage: [{ file: 'target.py', state: 'analyzed', added_lines: [2] }],
   executions: [{ branch: 'base', repeat: 1, status: 'pass', observations: [0], exit_code: 0, stdout: '0', stderr: '', executor: 'local trusted fixture' }],
   model_invocations: [], receipt: { key_id: 'test-key', sha256: 'hash', payload: {} }, repair: null, limitations: ['Controlled fixture'], duration_ms: 123, incremental: null };
-beforeEach(() => { mock.get.mockResolvedValue(structuredClone(run)); mock.verify.mockResolvedValue({ verified: true }); mock.benchmarks.mockResolvedValue([]); });
+beforeEach(() => { mock.get.mockResolvedValue(structuredClone(run)); mock.verify.mockResolvedValue({ verified: true }); mock.benchmarks.mockResolvedValue([]); mock.job.mockResolvedValue(null); mock.reference.mockResolvedValue(null); });
 it('links findings to proof and verifies the receipt', async () => {
   render(<ReviewDetail id="one" />);
   expect(await screen.findByText('Negative total')).toBeInTheDocument();
@@ -74,11 +74,17 @@ it('runs and exports measured fixture benchmark results', async () => {
   const report = { id: 'bench', dataset: 'seeded', dataset_sha256: 'abc', profile: 'Measured synthetic fixtures', repeats: 3, unique_cases: 12,
     metrics: { cases: 36, precision: 1, recall: .5, f1: .66, abstentions: 3, true_positives: 6, false_positives: 0 }, categories: { boundary: { cases: 6, precision: 1, recall: .5, abstentions: 0 } },
     median_duration_ms: 5, cost_usd: 0, limitations: ['No external review-quality score'], raw: [{ fixture: 'coupon', repeat: 1, run_id: 'one', status: 'REGRESSION_FOUND' }] };
-  mock.benchmark.mockResolvedValue(report);
+  const job = { id: 'job', status: 'running', completed: 0, total: 12 };
+  mock.start.mockImplementationOnce(async () => {
+    mock.job.mockResolvedValue({ ...job, completed: 12, status: 'completed', report_id: report.id });
+    mock.benchmarks.mockResolvedValue([report]);
+    return job;
+  });
   render(<BenchmarksPanel />);
   await screen.findByText('No measured runs yet');
   fireEvent.click(screen.getByRole('button', { name: /run fixture benchmark/i }));
-  expect(await screen.findByText('seeded')).toBeInTheDocument();
+  await waitFor(() => expect(mock.start).toHaveBeenCalledWith(1));
+  expect(await screen.findByText('seeded', {}, { timeout: 4500 })).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: /download raw report/i }));
   expect(mock.download).toHaveBeenCalledWith(report, 'aegispr-benchmark.json');
 });
