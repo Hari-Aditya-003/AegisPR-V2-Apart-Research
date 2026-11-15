@@ -84,3 +84,17 @@ def test_owner_benchmark_queues_and_reports_completion(tmp_path, monkeypatch):
     assert finished['status'] == 'completed'
     assert finished['completed'] == finished['total'] == 12
     assert finished['report_id'] == 'fixture-report'
+
+
+def test_aggregate_telemetry_requires_owner_code_or_public_opt_in(tmp_path, monkeypatch):
+    async def sample(_snapshot):
+        return {'cpu_percent': 15, 'ram_percent': 25}
+
+    monkeypatch.setattr('app.v2.api.RuntimeSnapshot.get', sample)
+    config = {'api_access_token': 'private-owner-code123', 'app_env': 'production'}
+    client = TestClient(make_app(tmp_path, **config))
+    assert client.get('/api/v2/runtime').json()['utilization'] == {}
+    headers = {'Authorization': 'Bearer ' + config['api_access_token']}
+    assert client.get('/api/v2/runtime', headers=headers).json()['utilization']['cpu_percent'] == 15
+    public = TestClient(make_app(tmp_path, v2_public_utilization=True, **config))
+    assert public.get('/api/v2/runtime').json()['utilization']['ram_percent'] == 25

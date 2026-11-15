@@ -1,9 +1,9 @@
 import { apiUrl, requestHeaders } from './api';
 import type { BenchmarkJob, BenchmarkReport, Fixture, ModelConfig, PublicReference, Receipt, Review, V2Health } from './v2-types';
 
-export async function v2Request<T>(path: string, body?: unknown): Promise<T> {
+export async function v2Request<T>(path: string, body?: unknown, signal?: AbortSignal): Promise<T> {
   const response = await fetch(`${apiUrl}${path}`, { method: body === undefined ? 'GET' : 'POST',
-    headers: requestHeaders(body !== undefined), cache: 'no-store',
+    headers: requestHeaders(body !== undefined), cache: 'no-store', signal,
     body: body === undefined ? undefined : JSON.stringify(body) });
   if (!response.ok) {
     if (response.status === 401) throw new Error('Owner access is required. Save the deployment access code above, then retry.');

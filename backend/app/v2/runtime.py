@@ -75,7 +75,7 @@ class RuntimeSnapshot:
                     values = response.json()
                 if isinstance(values, dict):
                     return bounded_percent(values.get('gpu_percent')), bounded_percent(values.get('vram_percent'))
-            except (httpx.HTTPError, ValueError):
+            except (httpx.HTTPError, httpx.InvalidURL, ValueError):
                 pass
         return None, None
 

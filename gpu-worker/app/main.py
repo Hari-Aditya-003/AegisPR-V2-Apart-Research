@@ -44,9 +44,11 @@ def runtime() -> dict[str, float | None]:
     metrics: dict[str, float | None] = {"gpu_percent": None, "vram_percent": None}
     if ranker.accelerator != "cuda":
         return metrics
+    cuda = ranker.xp.cuda.runtime
     try:
+        bus_id = cuda.deviceGetPCIBusId(0)
         result = subprocess.run(
-            ["nvidia-smi", "--id=0", "--query-gpu=utilization.gpu,memory.used,memory.total",
+            ["nvidia-smi", f"--id={bus_id}", "--query-gpu=utilization.gpu,memory.used,memory.total",
              "--format=csv,noheader,nounits"],
             capture_output=True, text=True, check=True, timeout=1,
         )
@@ -55,7 +57,7 @@ def runtime() -> dict[str, float | None]:
             metrics["gpu_percent"] = float(usage)
         if used.isdecimal() and total.isdecimal() and 0 < int(total) and int(used) <= int(total):
             metrics["vram_percent"] = round(100 * int(used) / int(total), 1)
-    except (OSError, subprocess.SubprocessError, ValueError):
+    except (OSError, subprocess.SubprocessError, ValueError, cuda.CUDARuntimeError):
         pass
     return metrics
 

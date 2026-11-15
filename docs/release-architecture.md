@@ -36,7 +36,7 @@ Owner access is required for pinned source reviews, review history, model settin
 | Browser JS heap | JavaScript heap usage as a share of its limit when the browser exposes both counters |
 | Hosted inference | Recorded requests, input and output tokens, and app-accounted cost. Remotely hosted hardware readings are unavailable |
 
-New fixture and ranking samples are included in signed evidence. Old runs retain their original signatures and show no sample where a counter was absent. The workspace displays live percentages in the left sidebar. A dash indicates an unavailable reading. The open-source Docker stack requires an NVIDIA runtime for the CUDA profile. See the inherited CPU profile and local-model-free V2 fixture verification instructions for development on other systems. [V2 configuration](v2-release.md).
+New fixture and ranking samples are included in signed evidence. Old runs retain their original signatures and show no sample where a counter was absent. The workspace displays live percentages in the left sidebar. A dash indicates an unavailable reading. The operator can set `V2_PUBLIC_UTILIZATION=true` to publish aggregate host and worker readings. The default limits those readings to owners. The open-source Docker stack requires an NVIDIA runtime for the CUDA profile. See the inherited CPU profile and local-model-free V2 fixture verification instructions for development on other systems. [V2 configuration](v2-release.md).
 
 ## Release checks
 
