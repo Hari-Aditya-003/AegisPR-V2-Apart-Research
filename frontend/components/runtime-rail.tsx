@@ -31,20 +31,25 @@ export function RuntimeRail() {
   useEffect(() => {
     let mounted = true;
     let timer: ReturnType<typeof setTimeout>;
+    let request: AbortController | undefined;
     async function sample() {
       const memory = (window.performance as Performance & { memory?: BrowserMemory }).memory;
       setHeap(memory && memory.jsHeapSizeLimit > 0 ? 100 * memory.usedJSHeapSize / memory.jsHeapSizeLimit : null);
+      const controller = new AbortController();
+      request = controller;
+      const deadline = setTimeout(() => controller.abort(), 4000);
       try {
-        const result = await v2Request<{ utilization?: Usage }>('/api/v2/runtime');
+        const result = await v2Request<{ utilization?: Usage }>('/api/v2/runtime', undefined, controller.signal);
         if (mounted) setUsage(result.utilization ?? {});
       } catch {
         if (mounted) setUsage({});
       } finally {
+        clearTimeout(deadline);
         if (mounted) timer = setTimeout(() => { void sample(); }, 5000);
       }
     }
     void sample();
-    return () => { mounted = false; clearTimeout(timer); };
+    return () => { mounted = false; clearTimeout(timer); request?.abort(); };
   }, []);
 
   const metrics = [

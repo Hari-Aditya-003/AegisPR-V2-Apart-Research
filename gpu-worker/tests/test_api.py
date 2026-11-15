@@ -21,10 +21,18 @@ def test_rank_requires_the_configured_bearer_token(monkeypatch) -> None:
 
 def test_runtime_reports_gpu_percentages_behind_worker_auth(monkeypatch) -> None:
     from subprocess import CompletedProcess
+    from types import SimpleNamespace
 
     monkeypatch.setattr(main, "token", "secret")
     monkeypatch.setattr(main.ranker, "accelerator", "cuda")
-    monkeypatch.setattr(main.subprocess, "run", lambda *args, **kwargs: CompletedProcess(args, 0, "0, 1024, 4096\n"))
+    cuda = SimpleNamespace(deviceGetPCIBusId=lambda index: "0000:01:00.0", CUDARuntimeError=RuntimeError)
+    monkeypatch.setattr(main.ranker, "xp", SimpleNamespace(cuda=SimpleNamespace(runtime=cuda)))
+
+    def measure(command, **_options):
+        assert "--id=0000:01:00.0" in command
+        return CompletedProcess(command, 0, "0, 1024, 4096\n")
+
+    monkeypatch.setattr(main.subprocess, "run", measure)
     client = TestClient(main.app)
     assert client.get("/runtime").status_code == 401
     response = client.get("/runtime", headers={"Authorization": "Bearer secret"})

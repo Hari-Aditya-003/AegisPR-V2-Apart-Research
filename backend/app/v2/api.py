@@ -73,6 +73,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     benchmark_lock = asyncio.Lock()
     benchmark_job: dict | None = None
 
+    def has_owner_code(request: Request) -> bool:
+        token = settings.api_access_token
+        return bool(token and secrets.compare_digest(
+            request.headers.get('Authorization', '').encode(), ('Bearer ' + token).encode(),
+        ))
+
     @app.middleware('http')
     async def boundary(request: Request, call_next):
         path = request.url.path
@@ -82,7 +88,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             token = settings.api_access_token
             if settings.app_env == 'production' and not token:
                 return JSONResponse({'detail': 'Owner access is not configured'}, status_code=503)
-            if token and not secrets.compare_digest(request.headers.get('Authorization', ''), 'Bearer ' + token):
+            if token and not has_owner_code(request):
                 return JSONResponse({'detail': 'Enter the owner deployment access code'}, status_code=401)
         if request.method == 'POST':
             # Bound both Content-Length and chunked bodies before JSON/schema parsing.
@@ -150,11 +156,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 'providers': {'nebius': bool(settings.nebius_api_key), 'vultr': bool(settings.vultr_api_key)}}
 
     @app.get('/api/v2/runtime')
-    async def runtime():
+    async def runtime(request: Request):
+        show_utilization = settings.v2_public_utilization or has_owner_code(request)
         usage = resource.getrusage(resource.RUSAGE_SELF)
         return {'label': settings.v2_runtime_label,
                 'scope': 'API process since startup',
-                'utilization': await runtime_snapshot.get(),
+                'utilization': await runtime_snapshot.get() if show_utilization else {},
                 'cpu_seconds': round(usage.ru_utime + usage.ru_stime, 3),
                 'peak_rss_bytes': usage.ru_maxrss * (1 if sys.platform == 'darwin' else 1024)}
 

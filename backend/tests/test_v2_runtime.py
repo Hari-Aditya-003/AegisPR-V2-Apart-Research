@@ -17,3 +17,10 @@ async def test_snapshot_samples_cpu_deltas_and_returns_missing_gpu_metrics(tmp_p
     snapshot = RuntimeSnapshot(None, None, tmp_path)
     assert await snapshot.get() == {'cpu_percent': 40, 'ram_percent': None, 'gpu_percent': None, 'vram_percent': None}
     assert (await snapshot.get())['cpu_percent'] == 40
+
+
+@pytest.mark.asyncio
+async def test_invalid_worker_url_does_not_break_available_metrics(tmp_path):
+    (tmp_path / 'meminfo').write_text('MemTotal: 1000 kB\nMemAvailable: 800 kB\n')
+    snapshot = RuntimeSnapshot('http://[::1', None, tmp_path)
+    assert await snapshot.get() == {'cpu_percent': None, 'ram_percent': 20, 'gpu_percent': None, 'vram_percent': None}
