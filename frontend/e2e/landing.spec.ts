@@ -186,6 +186,9 @@ test("guide pins chapter navigation and links to marked close-ups", async ({ pag
     expect(await nav.evaluate(element => element.getBoundingClientRect().top)).toBeCloseTo(top, 0);
     await expect(proof.getByText("What counts as evidence")).toBeVisible();
 
+    const closeUp = proof.getByRole("img", { name: /Verify receipt button/ });
+    await closeUp.scrollIntoViewIfNeeded();
+    await expect.poll(() => closeUp.evaluate(image => (image as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
     const zoom = proof.getByRole("link", { name: /Enlarge close-up: Verify receipt/ });
     await expect(zoom).toHaveAttribute("href", "/guide-focus/proof.webp");
     await expect(zoom).toHaveAttribute("target", "_blank");

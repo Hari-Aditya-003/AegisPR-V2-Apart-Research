@@ -131,7 +131,6 @@
 
 .figure img {
   display: block;
-  width: auto;
   max-width: 100%;
   height: auto;
   border: 1px solid #32605c;
@@ -144,6 +143,8 @@
   font-size: .875rem;
   line-height: 1.5;
 }
+
+.content li > .figure { margin-block: .9rem 1.4rem; }
 
 .figure a {
   display: inline-block;
