@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import logging
 import re
 import resource
 import secrets
@@ -11,6 +12,7 @@ import sys
 import time
 from collections import defaultdict, deque
 from typing import Literal
+from uuid import uuid4
 
 import httpx
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
@@ -22,6 +24,7 @@ from app.config import Settings, get_settings
 from app.v2.evaluation import run_seeded
 from app.v2.evidence import ReceiptSigner, sarif_report
 from app.v2.github_app import GitHubAppPublisher, allowed_repositories, verify_webhook
+from app.v2.models import CATALOG, PRICE_DATE
 from app.v2.service import ReviewService
 from app.v2.store import DuplicateDelivery
 
@@ -66,11 +69,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.reviews = service
     requests: dict[str, deque] = defaultdict(deque)
     benchmark_lock = asyncio.Lock()
+    benchmark_job: dict | None = None
 
     @app.middleware('http')
     async def boundary(request: Request, call_next):
         path = request.url.path
-        public = (path == '/health' or path in {'/api/v2/runtime', '/api/v2/public-key', '/api/v2/verify-receipt', '/api/github/webhook'} or
+        public = (path == '/health' or path in {'/api/v2/runtime', '/api/v2/learn', '/api/v2/public-key', '/api/v2/verify-receipt', '/api/github/webhook'} or
                   path == '/api/v2/demo' or path.startswith('/api/v2/demo/'))
         if not public and path.startswith('/api/') and request.method != 'OPTIONS':
             token = settings.api_access_token
@@ -263,13 +267,53 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 await asyncio.sleep(1)
         return StreamingResponse(stream(), media_type='text/event-stream')
 
+    @app.get('/api/v2/learn')
+    def public_reference():
+        reference = json.loads((service.dataset_path.parents[1] / 'results/2026-11-13-dell-fixture-summary.json').read_text())
+        report = reference['fixture_benchmark']
+        return {'measurement_date': reference['measurement_date'],
+                'benchmark': {field: report[field] for field in (
+                    'dataset', 'dataset_sha256', 'profile', 'unique_cases', 'repeats', 'metrics',
+                    'categories', 'median_duration_ms', 'cost_usd', 'limitations')},
+                'models': list(CATALOG.values()), 'price_date': PRICE_DATE,
+                'defaults': {'development_usd': Settings.model_fields['v2_budget_usd'].default,
+                             'per_review_usd': Settings.model_fields['v2_run_budget_usd'].default,
+                             'max_calls': Settings.model_fields['v2_max_calls'].default}}
+
+    def benchmark_running():
+        return benchmark_lock.locked() or (benchmark_job and benchmark_job['status'] == 'running')
+
+    async def run_benchmark_job(job, repeats):
+        async with benchmark_lock:
+            try:
+                report = await run_seeded(service, repeats=repeats,
+                                          on_progress=lambda count: job.update(completed=count))
+                job.update(status='completed', report_id=report['id'])
+            except Exception:
+                job.update(status='failed')
+                logging.getLogger(__name__).exception('Fixture benchmark job failed')
+
+    @app.get('/api/v2/benchmarks/job')
+    async def current_benchmark_job():
+        return benchmark_job
+
+    @app.post('/api/v2/benchmarks/job', status_code=202)
+    async def start_benchmark_job(payload: Benchmark, background_tasks: BackgroundTasks):
+        nonlocal benchmark_job
+        if benchmark_running():
+            raise HTTPException(409, 'A benchmark is already running')
+        benchmark_job = {'id': str(uuid4()), 'status': 'running', 'completed': 0,
+                         'total': len(service.cases) * payload.repeats}
+        background_tasks.add_task(run_benchmark_job, benchmark_job, payload.repeats)
+        return dict(benchmark_job)
+
     @app.get('/api/v2/benchmarks')
     def benchmarks():
         return service.store.benchmarks()
 
     @app.post('/api/v2/models/evaluate')
     async def evaluate(payload: Benchmark):
-        if benchmark_lock.locked():
+        if benchmark_running():
             raise HTTPException(409, 'A benchmark is already running')
         async with benchmark_lock:
             return await run_seeded(service, repeats=payload.repeats)

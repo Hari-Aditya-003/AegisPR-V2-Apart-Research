@@ -26,3 +26,12 @@ export type ModelConfig = {
 export type Metrics = { cases: number; precision: number | null; recall: number | null; f1: number | null; abstentions: number; false_positives: number; true_positives: number };
 export type BenchmarkReport = { id: string; dataset: string; dataset_sha256: string; profile: string; repeats: number; unique_cases: number; metrics: Metrics; categories: Record<string, Metrics>; median_duration_ms: number; cost_usd: number; limitations: string[]; raw: { fixture: string; repeat: number; run_id: string; status: string }[] };
 export type V2Health = { gpu_accelerator: string; executor: string; providers: { nebius: boolean; vultr: boolean } };
+
+export type BenchmarkJob = { id: string; status: 'running' | 'completed' | 'failed'; completed: number; total: number; report_id?: string };
+export type PublicReference = {
+  measurement_date: string;
+  benchmark: Omit<BenchmarkReport, 'id' | 'raw'>;
+  models: { provider: string; model: string; family: string; input: string; output: string; source: string }[];
+  price_date: string;
+  defaults: { development_usd: string; per_review_usd: string; max_calls: number };
+};

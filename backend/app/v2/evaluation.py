@@ -7,6 +7,7 @@ import hashlib
 import json
 import statistics
 from collections import defaultdict
+from collections.abc import Callable
 from pathlib import Path
 from uuid import uuid4
 
@@ -23,7 +24,7 @@ def score_predictions(rows: list[dict]) -> dict:
             'f1': 2 * precision * recall / (precision + recall) if precision is not None and recall is not None and precision + recall else None}
 
 
-async def run_seeded(service, *, repeats: int = 3) -> dict:
+async def run_seeded(service, *, repeats: int = 3, on_progress: Callable[[int], None] | None = None) -> dict:
     if not 1 <= repeats <= 3:
         raise ValueError('Benchmark repeats must be between one and three')
     rows, grouped, timings = [], defaultdict(list), []
@@ -41,6 +42,8 @@ async def run_seeded(service, *, repeats: int = 3) -> dict:
             rows.append(row)
             grouped[case.category].append(row)
             timings.append(run['duration_ms'])
+            if on_progress:
+                on_progress(len(rows))
     report = {'id': str(uuid4()), 'dataset': 'aegispr-seeded-prs-v1',
               'dataset_sha256': hashlib.sha256(service.dataset_path.read_bytes()).hexdigest(),
               'harness_sha256': hashlib.sha256(b''.join((Path(__file__).parent / name).read_bytes()

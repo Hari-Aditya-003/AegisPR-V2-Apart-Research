@@ -1,5 +1,5 @@
 import { apiUrl, requestHeaders } from './api';
-import type { BenchmarkReport, Fixture, ModelConfig, Receipt, Review, V2Health } from './v2-types';
+import type { BenchmarkJob, BenchmarkReport, Fixture, ModelConfig, PublicReference, Receipt, Review, V2Health } from './v2-types';
 
 export async function v2Request<T>(path: string, body?: unknown): Promise<T> {
   const response = await fetch(`${apiUrl}${path}`, { method: body === undefined ? 'GET' : 'POST',
@@ -31,7 +31,9 @@ export const saveFeedback = (id: string, finding_id: string, state: string) => v
 export const verifyReceipt = (receipt: Receipt) => v2Request<{ verified: boolean; key_id: string }>('/api/v2/verify-receipt', receipt);
 export const getSarif = (id: string, publicDemo = false) => v2Request<Record<string, unknown>>(`/api/v2/${publicDemo ? 'demo' : 'reviews'}/${encodeURIComponent(id)}/sarif`);
 export const listBenchmarks = () => v2Request<BenchmarkReport[]>('/api/v2/benchmarks');
-export const runBenchmark = () => v2Request<BenchmarkReport>('/api/v2/models/evaluate', { repeats: 3 });
+export const getPublicReference = () => v2Request<PublicReference>('/api/v2/learn');
+export const getBenchmarkJob = () => v2Request<BenchmarkJob | null>('/api/v2/benchmarks/job');
+export const startBenchmarkJob = (repeats: number) => v2Request<BenchmarkJob>('/api/v2/benchmarks/job', { repeats });
 
 export function downloadJson(value: unknown, filename: string) {
   const objectUrl = URL.createObjectURL(new Blob([JSON.stringify(value, null, 2)], { type: 'application/json' }));

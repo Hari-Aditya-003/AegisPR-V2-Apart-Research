@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { accessChangedEvent } from '@/lib/api';
-import { downloadJson, getModelConfig, getReview, getSarif, listBenchmarks, repairReview, runBenchmark, saveFeedback, verifyReceipt } from '@/lib/v2-api';
-import type { BenchmarkReport, Execution, ModelConfig, Review } from '@/lib/v2-types';
+import { downloadJson, getBenchmarkJob, getModelConfig, getPublicReference, getReview, getSarif, listBenchmarks, repairReview, saveFeedback, startBenchmarkJob, verifyReceipt } from '@/lib/v2-api';
+import type { BenchmarkJob, BenchmarkReport, Execution, ModelConfig, PublicReference, Review } from '@/lib/v2-types';
 import { RuntimePanel } from './runtime-panel';
 import { label, money, Status, Workspace } from './v2-workspace';
 
@@ -63,28 +63,146 @@ export function ReviewDetail({ id }: { id: string }) {
   </Workspace>;
 }
 
+function usePublicReference() {
+  const [reference, setReference] = useState<PublicReference | null>(null);
+  const [referenceError, setReferenceError] = useState(false);
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      try {
+        const value = await getPublicReference();
+        if (active) setReference(value);
+      } catch {
+        if (active) setReferenceError(true);
+      }
+    })();
+    return () => { active = false; };
+  }, []);
+  return { reference, referenceError };
+}
+
 export function ModelsPanel() {
+  const { reference, referenceError } = usePublicReference();
   const [config, setConfig] = useState<ModelConfig | null>(null), [error, setError] = useState('');
-  const load = useCallback(async () => { try { setConfig(await getModelConfig()); setError(''); } catch (cause) { setError(errorText(cause)); } }, []);
+  const load = useCallback(async () => { try { setConfig(await getModelConfig()); setError(''); } catch (cause) { setConfig(null); setError(errorText(cause)); } }, []);
   useEffect(() => { void load(); window.addEventListener(accessChangedEvent, load); return () => window.removeEventListener(accessChangedEvent, load); }, [load]);
-  return <Workspace><div className="v2-page-heading"><div><p className="v2-overline">OPERATOR SETTINGS</p><h1>Models & limits</h1><p>One spending ledger. Task-specific models. Your source-sharing choice.</p></div><button className="v2-text-button" onClick={() => void load()}>Refresh ↻</button></div>
-    {error && <p role="alert" className="v2-error">{error}</p>}{config && <><div className="v2-metrics"><article><span>DEVELOPMENT LIMIT</span><strong>{money(config.budget.limit_usd)}</strong><small>Combined across providers</small></article><article><span>ACCOUNTED USE</span><strong>${config.budget.accounted_cost_usd.toFixed(5)}</strong><small>{config.budget.calls} calls</small></article><article><span>PER REVIEW</span><strong>{money(config.budget.per_run_usd)}</strong><small>At most {config.budget.max_calls} calls</small></article><article><span>EXTERNAL MODELS</span><strong className="v2-metric-word">{config.enabled ? 'Opt in' : 'Off'}</strong><small>No automatic paid retries</small></article></div>
+  return <Workspace><div className="v2-page-heading"><div><p className="v2-overline">OPERATOR SETTINGS</p><h1>Models & limits</h1><p>See which models handle each task, how the app accounts for usage, and where to grant consent.</p></div><button className="v2-text-button" onClick={() => void load()}>Refresh ↻</button></div>
+    <section className="v2-panel v2-help-panel">
+      <h2>Choose model use on a PR review</h2>
+      <ol><li>Expand <strong>Private deployment access</strong> above and save the owner code.</li>
+        <li>Open <Link href="/#workspace">Reviews</Link>, select <strong>Review a pull request</strong>, and fill in the URL and both exact SHAs.</li>
+        <li>Leave <strong>Use paid specialists</strong> clear for a local-only review. To opt in, check it and the separate consent to send public source.</li>
+        <li>Open <strong>Models</strong> in the resulting review to inspect provider decisions, tokens, and cache hits.</li></ol>
+      <p>Operators set provider credentials and budgets on the server. This page displays the effective policy after owner access.</p>
+      <Link className="v2-text-button" href="/guide#model-settings">See illustrated model setup ↗</Link>
+    </section>
+    {!config && reference && <section className="v2-panel">
+      <h2>Published model catalog and default limits</h2>
+      <p>Defaults are ${reference.defaults.development_usd} across providers, ${reference.defaults.per_review_usd} per review, and {reference.defaults.max_calls} calls per review. Operator settings may differ.</p>
+      <div className="v2-table-wrap"><table><thead><tr><th>Provider</th><th>Model</th><th>Recorded price per million tokens</th></tr></thead><tbody>
+        {reference.models.map(row => <tr key={row.model}><td>{row.provider}</td><td>{row.model}</td><td>${row.input} in / ${row.output} out <small><a href={row.source}>Catalog recorded {reference.price_date} ↗</a></small></td></tr>)}
+      </tbody></table></div>
+    </section>}
+    {!config && referenceError && <p className="v2-empty">The published model catalog could not be loaded. Refresh the page to retry.</p>}
+    {error && <p role="status" className="v2-access-note">{error}</p>}{config && <><div className="v2-metrics"><article><span>DEVELOPMENT LIMIT</span><strong>{money(config.budget.limit_usd)}</strong><small>Combined across providers</small></article><article><span>ACCOUNTED USE</span><strong>${config.budget.accounted_cost_usd.toFixed(5)}</strong><small>{config.budget.calls} calls</small></article><article><span>PER REVIEW</span><strong>{money(config.budget.per_run_usd)}</strong><small>At most {config.budget.max_calls} calls</small></article><article><span>EXTERNAL MODELS</span><strong className="v2-metric-word">{config.enabled ? 'Opt in' : 'Off'}</strong><small>No automatic paid retries</small></article></div>
       <section className="v2-panel"><h2>Specialist routing</h2><p>{config.privacy}</p><div className="v2-table-wrap"><table><thead><tr><th>Specialist</th><th>Provider / model</th><th>Price per 1M tokens</th><th>Connection</th></tr></thead><tbody>{config.routes.map(route => <tr key={route.task}><td><strong>{route.task}</strong><small>{route.reason}</small></td><td><span>{route.model_id}</span><small>{route.provider} · {route.family}</small></td><td>${route.input_per_million} in / ${route.output_per_million} out<small><a href={route.price_source} target="_blank" rel="noreferrer">Catalog · {route.price_checked} ↗</a></small></td><td><span className={`v2-badge ${route.configured ? 'green' : ''}`}>{route.configured ? 'Configured' : 'Not configured'}</span></td></tr>)}</tbody></table></div><p className="v2-footnote">Configuration confirms credentials are present. It does not establish model quality, a successful inference call, or the provider balance. App accounting is not a provider billing guarantee.</p></section>
       <div className="v2-two-columns"><section className="v2-panel"><h2>Repository policy</h2><p>Allowlisted public repositories:</p>{config.allowed_repositories.map(repo => <code className="v2-code-row" key={repo}>{repo}</code>)}<p>Repair write back and arbitrary repository execution are off.</p></section><section className="v2-panel"><h2>GitHub integration</h2><dl className="v2-settings-list"><div><dt>App credentials</dt><dd>{config.github_app.configured ? 'Configured' : 'Not configured'}</dd></div><div><dt>Signed webhook</dt><dd>{config.github_app.webhook_configured ? 'Configured' : 'Not configured'}</dd></div><div><dt>Publishing</dt><dd>{config.github_app.publish_enabled ? 'Owner opted in' : 'Disabled'}</dd></div></dl><p>Checks are SHA-specific and neutral. AegisPR never enables a required merge gate automatically.</p></section></div></>}
   </Workspace>;
 }
 
 const percent = (value: number | null) => value === null ? 'Not measured' : `${(value * 100).toFixed(1)}%`;
+
+function BenchmarkSummary({ report, title }: { report: PublicReference['benchmark']; title: string }) {
+  return <>
+    <div className="v2-metrics">
+      <article><span>PINNED FIXTURES</span><strong>{report.unique_cases}</strong><small>{report.repeats} repeats · {report.metrics.cases} observations</small></article>
+      <article><span>FIXTURE PRECISION</span><strong>{percent(report.metrics.precision)}</strong><small>{report.metrics.true_positives} true positives · {report.metrics.false_positives} false positives</small></article>
+      <article><span>FIXTURE RECALL</span><strong>{percent(report.metrics.recall)}</strong><small>{report.metrics.abstentions} abstentions</small></article>
+      <article><span>MODEL COST</span><strong>{money(report.cost_usd)}</strong><small>Deterministic fixture profile</small></article>
+    </div>
+    <section className="v2-panel">
+      <h2>{title}</h2>
+      <p>{report.profile}</p>
+      <code className="v2-long-hash">Dataset SHA256 {report.dataset_sha256}</code>
+      <div className="v2-table-wrap"><table><thead><tr><th>Category</th><th>Observations</th><th>Precision</th><th>Recall</th><th>Abstentions</th></tr></thead><tbody>
+        {Object.entries(report.categories).map(([category, metrics]) => <tr key={category}><td>{label(category)}</td><td>{metrics.cases}</td><td>{percent(metrics.precision)}</td><td>{percent(metrics.recall)}</td><td>{metrics.abstentions}</td></tr>)}
+      </tbody></table></div>
+      <p>Median time: {report.median_duration_ms} ms per review</p>
+      {report.limitations.map(note => <p className="v2-footnote" key={note}>{note}</p>)}
+    </section>
+  </>;
+}
+
 export function BenchmarksPanel() {
-  const [reports, setReports] = useState<BenchmarkReport[]>([]), [loading, setLoading] = useState(true), [busy, setBusy] = useState(false), [error, setError] = useState('');
-  const load = useCallback(async () => { try { setReports(await listBenchmarks()); setError(''); } catch (cause) { setError(errorText(cause)); } finally { setLoading(false); } }, []);
+  const { reference, referenceError } = usePublicReference();
+  const [reports, setReports] = useState<BenchmarkReport[]>([]);
+  const [job, setJob] = useState<BenchmarkJob | null>(null);
+  const [owner, setOwner] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [starting, setStarting] = useState(false);
+  const [repeats, setRepeats] = useState(1);
+  const [error, setError] = useState('');
+  const load = useCallback(async () => {
+    try {
+      const [history, current] = await Promise.all([listBenchmarks(), getBenchmarkJob()]);
+      setReports(history); setJob(current); setOwner(true); setError('');
+    } catch (cause) {
+      setOwner(false); setReports([]); setJob(null); setError(errorText(cause));
+    } finally { setLoading(false); }
+  }, []);
   useEffect(() => { void load(); window.addEventListener(accessChangedEvent, load); return () => window.removeEventListener(accessChangedEvent, load); }, [load]);
-  async function evaluate() { setBusy(true); setError(''); try { const report = await runBenchmark(); setReports(previous => [report, ...previous]); } catch (cause) { setError(errorText(cause)); } finally { setBusy(false); } }
+  useEffect(() => {
+    if (!owner || job?.status !== 'running') return;
+    const timer = setTimeout(() => void load(), 2000);
+    return () => clearTimeout(timer);
+  }, [job, load, owner]);
+
+  async function evaluate() {
+    setStarting(true);
+    setError('');
+    try { setJob(await startBenchmarkJob(repeats)); }
+    catch (cause) { setError(errorText(cause)); }
+    finally { setStarting(false); }
+  }
   const report = reports[0];
-  return <Workspace><div className="v2-page-heading"><div><p className="v2-overline">REPRODUCIBILITY</p><h1>Measure before claiming.</h1><p>Pinned inputs, raw outcomes, repeated runs, and visible abstentions.</p></div><button className="v2-button" disabled={busy} onClick={() => void evaluate()}>{busy ? 'Running fixture evaluation…' : 'Run fixture benchmark'}</button></div>
-    {error && <p role="alert" className="v2-error">{error}</p>}<div className="v2-scope"><strong>Evaluation scope</strong><span>Synthetic fixtures with hand-authored oracles. No model tokens. This measures the execution workflow, not independent review quality.</span></div>
-    {loading ? <p className="v2-empty">Loading measurements…</p> : !report ? <section className="v2-panel v2-empty"><h2>No measured runs yet</h2><p>Run the pinned fixture benchmark to create actual results. External ReviewBench and multi-model scores remain unmeasured.</p></section> : <><div className="v2-metrics"><article><span>PINNED FIXTURES</span><strong>{report.unique_cases}</strong><small>{report.repeats} repeats · {report.metrics.cases} observations</small></article><article><span>FIXTURE PRECISION</span><strong>{percent(report.metrics.precision)}</strong><small>{report.metrics.true_positives} true positives · {report.metrics.false_positives} false positives</small></article><article><span>FIXTURE RECALL</span><strong>{percent(report.metrics.recall)}</strong><small>{report.metrics.abstentions} abstentions</small></article><article><span>MODEL COST</span><strong>{money(report.cost_usd)}</strong><small>Deterministic fixture profile</small></article></div>
-      <section className="v2-panel"><div className="v2-panel-heading"><div><p className="v2-overline">LATEST MEASURED RUN</p><h2>{report.dataset}</h2></div><button className="v2-text-button" onClick={() => downloadJson(report, 'aegispr-benchmark.json')}>Download raw report ↓</button></div><p>{report.profile}</p><code className="v2-long-hash">Dataset SHA256 {report.dataset_sha256}</code><div className="v2-table-wrap"><table><thead><tr><th>Category</th><th>Observations</th><th>Precision</th><th>Recall</th><th>Abstentions</th></tr></thead><tbody>{Object.entries(report.categories).map(([category, metrics]) => <tr key={category}><td>{label(category)}</td><td>{metrics.cases}</td><td>{percent(metrics.precision)}</td><td>{percent(metrics.recall)}</td><td>{metrics.abstentions}</td></tr>)}</tbody></table></div><p>Median time: {report.median_duration_ms} ms per review</p>{report.limitations.map(note => <p className="v2-footnote" key={note}>{note}</p>)}</section>
-      <section className="v2-panel"><h2>Run evidence</h2><div className="v2-table-wrap"><table><thead><tr><th>Fixture</th><th>Repeat</th><th>Result</th><th>Evidence</th></tr></thead><tbody>{report.raw.map(row => <tr key={`${row.run_id}-${row.repeat}`}><td>{row.fixture}</td><td>{row.repeat}</td><td><Status value={row.status} /></td><td><Link href={`/reviews/${row.run_id}`}>Inspect proof ↗</Link></td></tr>)}</tbody></table></div></section></>}
+  return <Workspace>
+    <div className="v2-page-heading"><div><h1>Benchmarks</h1><p>Run the pinned fixtures and see how often AegisPR reproduced the changes it was expected to catch.</p></div><button className="v2-text-button" onClick={() => void load()}>Refresh ↻</button></div>
+    <section className="v2-panel v2-help-panel">
+      <h2>Run and read a fixture benchmark</h2>
+      <ol><li>Save the owner code under <strong>Private deployment access</strong>.</li>
+        <li>Set <strong>Suite repetitions</strong>. One pass records 12 observations. Three passes record 36.</li>
+        <li>Click <strong>Run fixture benchmark</strong>. Each observation runs three base and three head checks. The page shows progress while the suite runs.</li>
+        <li>Review the category table and open <strong>Inspect proof</strong> for an individual result. Use <strong>Download raw report</strong> to export the JSON.</li></ol>
+      <p>Precision measures how many flagged regressions were expected. Recall measures how many expected regressions were found. Abstentions are cases where the runner withheld a verdict.</p>
+      <Link className="v2-text-button" href="/guide#fixture-benchmarks">See the illustrated benchmark steps ↗</Link>
+    </section>
+    <div className="v2-scope"><strong>Evaluation scope</strong><span>Synthetic fixtures with hand-authored oracles. Zero model tokens. External ReviewBench scoring and provider comparisons are separate work.</span></div>
+    <section className="v2-panel v2-help-panel" aria-label="Benchmark controls">
+      <h2>Owner benchmark runner</h2>
+      <div className="v2-run-controls">
+        <label htmlFor="benchmark-repeats">Suite repetitions</label>
+        <select id="benchmark-repeats" value={repeats} onChange={event => setRepeats(Number(event.target.value))} disabled={!owner || starting || job?.status === 'running'}>
+          <option value="1">1 pass · 12 observations</option><option value="3">3 passes · 36 observations</option>
+        </select>
+        <button className="v2-button" disabled={!owner || starting || job?.status === 'running'} onClick={() => void evaluate()}>{starting || job?.status === 'running' ? 'Running fixture evaluation…' : 'Run fixture benchmark'}</button>
+      </div>
+      {loading && <p>Checking owner access…</p>}
+      {error && <p role={owner ? 'alert' : 'status'} className={owner ? 'v2-error' : 'v2-access-note'}>{error}</p>}
+      {job?.status === 'running' && <p role="status">{job.completed} of {job.total} observations completed. You can leave this page and return.</p>}
+      {job?.status === 'completed' && <p role="status">Benchmark complete. {job.completed} observations recorded.</p>}
+      {job?.status === 'failed' && <p role="alert" className="v2-error">The benchmark stopped early. Retry after checking the worker.</p>}
+    </section>
+    {report ? <>
+      <BenchmarkSummary report={report} title={report.dataset} />
+      <section className="v2-panel"><div className="v2-panel-heading"><h2>Run evidence</h2><button className="v2-text-button" onClick={() => downloadJson(report, 'aegispr-benchmark.json')}>Download raw report ↓</button></div>
+        <div className="v2-table-wrap"><table><thead><tr><th>Fixture</th><th>Repeat</th><th>Result</th><th>Evidence</th></tr></thead><tbody>
+          {report.raw.map(row => <tr key={row.run_id}><td>{row.fixture}</td><td>{row.repeat}</td><td><Status value={row.status} /></td><td><Link href={`/reviews/${row.run_id}`}>Inspect proof ↗</Link></td></tr>)}
+        </tbody></table></div>
+      </section>
+    </> : owner && !loading && <section className="v2-panel v2-empty"><h2>No measured runs yet</h2><p>Run the pinned fixture benchmark to create actual results.</p></section>}
+    {reference ? <section className="v2-reference" aria-label="Public reference benchmark">
+      <BenchmarkSummary report={reference.benchmark} title={`Public reference run · ${reference.measurement_date}`} />
+      <p className="v2-panel"><a href="https://github.com/Hari-Aditya-003/AegisPR-V2-Apart-Research/blob/main/evals/results/2026-11-13-dell-fixture-summary.json">View published benchmark evidence ↗</a></p>
+    </section> : referenceError && <p className="v2-empty">The published reference could not be loaded. Refresh the page to retry.</p>}
   </Workspace>;
 }
