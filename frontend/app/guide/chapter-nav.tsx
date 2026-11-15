@@ -43,13 +43,28 @@ export function ChapterNav({ chapters }: { chapters: readonly (readonly [string,
   }, [chapters]);
 
   useEffect(() => {
-    const list = navigation.current?.querySelector('ul');
+    const nav = navigation.current;
+    const list = nav?.querySelector('ul');
     const current = list?.querySelector('[aria-current="location"]');
-    if (!list || !current || list.scrollWidth <= list.clientWidth) return;
-    const rail = list.getBoundingClientRect();
-    const link = current.getBoundingClientRect();
-    if (link.left < rail.left) list.scrollLeft -= rail.left - link.left;
-    if (link.right > rail.right) list.scrollLeft += link.right - rail.right;
+    if (!nav || !list || !current) return;
+
+    const reveal = () => {
+      const link = current.getBoundingClientRect();
+      if (list.scrollWidth > list.clientWidth) {
+        const rail = list.getBoundingClientRect();
+        if (link.left < rail.left) list.scrollLeft -= rail.left - link.left;
+        if (link.right > rail.right) list.scrollLeft += link.right - rail.right;
+      }
+      if (nav.scrollHeight > nav.clientHeight) {
+        const rail = nav.getBoundingClientRect();
+        if (link.top < rail.top) nav.scrollTop -= rail.top - link.top;
+        if (link.bottom > rail.bottom) nav.scrollTop += link.bottom - rail.bottom;
+      }
+    };
+
+    reveal();
+    window.addEventListener('resize', reveal);
+    return () => window.removeEventListener('resize', reveal);
   }, [active]);
 
   return <nav ref={navigation} className={styles.chapters} aria-label="Guide chapters">

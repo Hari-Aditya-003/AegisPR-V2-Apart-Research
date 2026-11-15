@@ -197,3 +197,14 @@ test("guide pins chapter navigation and links to marked close-ups", async ({ pag
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   }
 });
+
+test("guide keeps the active chapter visible in a short desktop window", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 365 });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/guide#compare");
+  const nav = page.getByRole("navigation", { name: "Guide chapters" });
+  const active = nav.getByRole("link", { name: "Compare versions and use V1" });
+  await expect(active).toHaveAttribute("aria-current", "location");
+  await expect(active).toBeInViewport({ ratio: 0.95 });
+  expect(await nav.evaluate(element => element.scrollTop)).toBeGreaterThan(0);
+});
