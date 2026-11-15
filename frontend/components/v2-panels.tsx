@@ -144,7 +144,9 @@ export function BenchmarksPanel() {
   const [error, setError] = useState('');
   const load = useCallback(async () => {
     try {
-      const [history, current] = await Promise.all([listBenchmarks(), getBenchmarkJob()]);
+      const current = await getBenchmarkJob();
+      // A completed job guarantees its report is available to the following request.
+      const history = await listBenchmarks();
       setReports(history); setJob(current); setOwner(true); setError('');
     } catch (cause) {
       setOwner(false); setReports([]); setJob(null); setError(errorText(cause));
