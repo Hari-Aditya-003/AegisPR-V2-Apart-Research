@@ -27,14 +27,16 @@ Owner access is required for pinned source reviews, review history, model settin
 
 | Measurement | Scope |
 | --- | --- |
-| API CPU time and peak RAM | Cumulative CPU time and peak RSS of the API process since startup, sampled every ten seconds |
+| Workspace CPU and RAM | Linux host utilization and memory in use, refreshed every five seconds |
+| Workspace GPU and VRAM | Ranking device utilization and device memory in use |
+| API CPU time and peak RAM in the runtime API | Cumulative CPU time and peak RSS of the API process since startup, returned for compatibility |
 | Fixture CPU time | Sum of the check process CPU time, in milliseconds, across recorded repetitions and any repair checks |
 | Fixture peak RAM | Largest peak resident set among measured check processes |
 | GPU device VRAM | Device-wide used and total memory sampled after context ranking when CUDA provides it |
-| Browser JS heap | Local Chromium JavaScript heap reading when the browser exposes it. This is narrower than Chrome process memory |
+| Browser JS heap | JavaScript heap usage as a share of its limit when the browser exposes both counters |
 | Hosted inference | Recorded requests, input and output tokens, and app-accounted cost. Remotely hosted hardware readings are unavailable |
 
-New fixture and ranking samples are included in signed evidence. Old runs retain their original signatures and show no sample where a counter was absent. The page labels the configured API host so a Dell, self-hosted VM, or cloud deployment can identify its execution environment. The open-source Docker stack requires an NVIDIA runtime for the CUDA profile. See the inherited CPU profile and local-model-free V2 fixture verification instructions for development on other systems. [V2 configuration](v2-release.md).
+New fixture and ranking samples are included in signed evidence. Old runs retain their original signatures and show no sample where a counter was absent. The workspace displays live percentages in the left sidebar. A dash indicates an unavailable reading. The open-source Docker stack requires an NVIDIA runtime for the CUDA profile. See the inherited CPU profile and local-model-free V2 fixture verification instructions for development on other systems. [V2 configuration](v2-release.md).
 
 ## Release checks
 

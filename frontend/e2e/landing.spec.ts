@@ -19,15 +19,16 @@ test("home keeps the original look and leads to the version comparison and live 
   await expect(page.getByRole("button", { name: "Run safe example" })).toBeVisible();
 });
 
-test("paused motion does not hide newly entered evidence panels", async ({ page }) => {
+test("system reduced-motion settings keep evidence panels visible", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/legacy");
-  await page.getByRole("button", { name: /Pause animation$/ }).click();
+  await expect(page.getByRole("button", { name: "Pause animation" })).toHaveCount(0);
   const logo = page.getByAltText("AegisPR shield and branching circuit logo");
   expect(await logo.evaluate(node => getComputedStyle(node).animationName)).toBe("none");
   await page.getByRole("button", { name: "Safe change", exact: true }).click();
   const evidence = page.locator(".preview-result");
   expect(await evidence.evaluate(node => getComputedStyle(node).opacity)).toBe("1");
-  await page.getByRole("button", { name: /Resume animation$/ }).click();
+  await page.emulateMedia({ reducedMotion: "no-preference" });
   expect(await logo.evaluate(node => getComputedStyle(node).animationName)).not.toBe("none");
 });
 
@@ -207,4 +208,19 @@ test("guide keeps the active chapter visible in a short desktop window", async (
   await expect(active).toHaveAttribute("aria-current", "location");
   await expect(active).toBeInViewport({ ratio: 0.95 });
   expect(await nav.evaluate(element => element.scrollTop)).toBeGreaterThan(0);
+});
+
+test("workspace shows measured resource percentages in the compact rail", async ({ page }) => {
+  await page.route("**/api/v2/runtime", route => route.fulfill({
+    json: { utilization: { cpu_percent: 15.9, gpu_percent: 0, ram_percent: 82.1, vram_percent: null } },
+  }));
+  await page.setViewportSize({ width: 320, height: 844 });
+  await page.goto("/#workspace");
+  const rail = page.getByRole("region", { name: "Resource usage" });
+  await expect(rail.getByText("15.9%")).toBeVisible();
+  await expect(rail.getByText("0.0%")).toBeVisible();
+  await expect(rail.getByText("82.1%")).toBeVisible();
+  await expect(rail.getByText("Unavailable").first()).toBeAttached();
+  await expect(page.getByRole("heading", { name: "Execution environment" })).toHaveCount(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
