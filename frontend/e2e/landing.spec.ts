@@ -168,3 +168,29 @@ test("reviewer can generate and verify an isolated repair", async ({ page }) => 
   await expect(page.getByRole("heading", { name: "Repair evidence" })).toBeVisible();
   await expect(page.getByText("View isolated patch")).toBeVisible();
 });
+
+test("guide pins chapter navigation and links to marked close-ups", async ({ page }) => {
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("/guide");
+    const nav = page.getByRole("navigation", { name: "Guide chapters" });
+    const chapter = nav.getByRole("link", { name: "Verify proof and repair" });
+    const proof = page.locator("#proof-and-repair");
+    await chapter.click();
+    await expect(page).toHaveURL(/#proof-and-repair$/);
+    await expect(proof.getByRole("heading", { name: "Verify proof and repair" })).toBeInViewport();
+    await expect(chapter).toHaveAttribute("aria-current", "location");
+    const top = await nav.evaluate(element => element.getBoundingClientRect().top);
+    await page.evaluate(() => window.scrollBy(0, 180));
+    expect(await nav.evaluate(element => element.getBoundingClientRect().top)).toBeCloseTo(top, 0);
+    await expect(proof.getByText("What counts as evidence")).toBeVisible();
+
+    const zoom = proof.getByRole("link", { name: /Enlarge close-up: Verify receipt/ });
+    await expect(zoom).toHaveAttribute("href", "/guide-focus/proof.webp");
+    await expect(zoom).toHaveAttribute("target", "_blank");
+    const crop = await page.request.get(new URL("/guide-focus/proof.webp", page.url()).href);
+    expect(crop.ok()).toBe(true);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  }
+});

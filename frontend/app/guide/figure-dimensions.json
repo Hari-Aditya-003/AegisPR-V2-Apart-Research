@@ -1,0 +1,58 @@
+{
+  "home": {
+    "width": 329,
+    "height": 66
+  },
+  "fixture": {
+    "width": 575,
+    "height": 126
+  },
+  "compare": {
+    "width": 1210,
+    "height": 248
+  },
+  "proof": {
+    "width": 691,
+    "height": 211
+  },
+  "executions": {
+    "width": 691,
+    "height": 247
+  },
+  "resources": {
+    "width": 242,
+    "height": 397
+  },
+  "repair": {
+    "width": 691,
+    "height": 422
+  },
+  "access": {
+    "width": 384,
+    "height": 249
+  },
+  "models": {
+    "width": 1048,
+    "height": 159
+  },
+  "routing": {
+    "width": 998,
+    "height": 142
+  },
+  "pr-fields": {
+    "width": 990,
+    "height": 200
+  },
+  "pr-consent": {
+    "width": 990,
+    "height": 133
+  },
+  "benchmark-run": {
+    "width": 990,
+    "height": 217
+  },
+  "benchmark-result": {
+    "width": 1048,
+    "height": 159
+  }
+}

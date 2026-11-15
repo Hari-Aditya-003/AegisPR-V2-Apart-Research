@@ -489,9 +489,6 @@ html[data-motion=paused] *, html[data-motion=paused] *::before, html[data-motion
 .v2-start-guide, .v2-runtime { margin-block: 0 1.4rem; }
 .v2-runtime .v2-settings-list { overflow-wrap: anywhere; }
 .v2-runtime > p { font-size: .82rem; color: #b0c8c5; }
-.v2-guide { width: min(58rem, calc(100% - 2.5rem)); margin: 3rem auto; }
-.v2-guide .v2-panel { margin-bottom: 1.3rem; }
-.v2-guide ol { padding-inline-start: 1.25rem; line-height: 1.8; }
 
 .unified-hero { min-height: min(720px, 92vh); }
 .unified-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin-block: 1.5rem 1rem; }
@@ -520,16 +517,3 @@ html[data-motion=paused] *, html[data-motion=paused] *::before, html[data-motion
 .v2-run-controls select { min-width: 0; max-width: 100%; color: var(--ink); background: var(--surface-2); border: 1px solid var(--line); padding: .6rem; border-radius: 6px; }
 .v2-access-note { margin-top: .9rem; color: #bed6d3; }
 .v2-reference { margin-top: 1.5rem; }
-
-.illustrated-guide { width: min(70rem, calc(100% - 2rem)); }
-.guide-intro { margin-bottom: 1.75rem; }
-.guide-intro p { max-width: 64ch; color: var(--muted); line-height: 1.7; }
-.guide-chapters { display: flex; flex-wrap: wrap; gap: .6rem 1.15rem; margin-bottom: 2rem; }
-.guide-chapters a { padding-block: .4rem; }
-.illustrated-guide section { scroll-margin-top: 96px; }
-.illustrated-guide section li, .illustrated-guide section p { line-height: 1.65; }
-.illustrated-guide code { overflow-wrap: anywhere; color: #a6e6d9; }
-.illustrated-guide section a, .guide-chapters a { color: #78edc8; text-decoration: underline; text-underline-offset: .2em; }
-.guide-figure { margin: 1.5rem 0; }
-.guide-figure img { display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: 10px; }
-.guide-figure figcaption { padding-top: .65rem; color: var(--muted); font-size: .875rem; }
