@@ -1,0 +1,23 @@
+name: Suggest an improvement
+description: Propose a change to the product, tests, or documentation.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: Who would this help, and what are they trying to do?
+      description: Name the page, command, document, or fixture where the change would help.
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: What should someone be able to do after the change?
+      description: Give an example a contributor could use to check the result.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Pointers for a contributor
+      description: Link relevant files, related issues, or public examples if you have them.

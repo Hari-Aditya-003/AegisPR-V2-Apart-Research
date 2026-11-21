@@ -2,6 +2,10 @@
 
 This is the separate **Apart Research hackathon development repository**, duplicated from [Hari-Aditya-003/AegisPR](https://github.com/Hari-Aditya-003/AegisPR) on **November 10, 2026**. The original repository remains unchanged.
 
+## Contribute to V2
+
+Pick a [good first issue](https://github.com/Hari-Aditya-003/AegisPR-V2-Apart-Research/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) or browse [help wanted](https://github.com/Hari-Aditya-003/AegisPR-V2-Apart-Research/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22). The [contribution guide](CONTRIBUTING.md) walks you through your first local check and pull request. You can work on documentation, the UI, or fixture scoring without provider credentials.
+
 ## Try AegisPR online
 
 [Open the AegisPR workspace](https://aegispr-v2.snap-hub.workers.dev). The homepage uses the original V1 interface and includes the V2 tools in one workspace. Select **Compare V1 and V2** for a side-by-side guide or **Try a live fixture** to start the coupon check. Then open **Proof** for the six checks and signed evidence. Use **Repair** to verify the prewritten fixture patch and **Resource usage** to inspect the runtime. The public fixture path requires no credentials or model credits.
