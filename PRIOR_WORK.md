@@ -39,6 +39,7 @@ Record each new contribution below with its commit or pull request, date, change
 | --- | --- | --- | --- |
 | November 10, 2026 | Separate repository and prior-work documentation | Initial V2 documentation commit; baseline tag above | Repository setup only; no new functionality or research results |
 | November 11, 2026 | V2 API, evidence contracts, signed receipts, bounded provider adapters, static coverage, curated remote worker, fixture evaluation, GitHub adapter, new UI and separate deployment | V2 source under `backend/app/v2`, new frontend workspace and tests; [release scope](docs/v2-release.md) | New implementation/integration work; fixture measurements and connectivity checks only, no independent real-PR accuracy claim |
+| November 21, 2026 | Contributor onboarding, issue forms and pull request template | [Contribution files at 76228f6](https://github.com/Hari-Aditya-003/AegisPR-V2-Apart-Research/commit/76228f6df5f12245f8fdbed971dac4dc7853c0c1) | Collaboration documentation and repository maintenance |
 
 The differential execution concept, seeded source pairs, original model/test/repair workflow, CUDA ranker, V1 API, and original UI were inherited. V2 integrates or extends those pieces; it does not claim to have invented them during the event. The V2.0–V3.0 document is a roadmap, and unfulfilled gates are explicitly listed in the release scope.
 
