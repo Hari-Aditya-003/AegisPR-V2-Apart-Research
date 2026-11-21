@@ -1,0 +1,27 @@
+name: Report a bug
+description: Describe a problem you observed in AegisPR.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For suspected vulnerabilities, follow the [security policy](https://github.com/Hari-Aditya-003/AegisPR-V2-Apart-Research/blob/main/SECURITY.md) to report privately. Share only public or synthetic examples here.
+  - type: textarea
+    id: behavior
+    attributes:
+      label: What did you expect, and what happened?
+      description: Include the visible result or a short, redacted error message.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: How can someone observe it?
+      description: List the page, fixture or command and the steps you took. If it happened intermittently, say how often.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Where did this happen?
+      description: For example, the hosted workspace and browser, or your local commit and runtime version.
